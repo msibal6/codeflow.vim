@@ -28,7 +28,7 @@ endfunction
 " }}}
 
 " function! s:Window.isBufferHidden(bufferNumber) {{{1
-function! s:Window.isBufferHidden(bufferNumber)
+function! s:Window.isBufferHidden(bufferNumber) abort
     redir => buffers
     silent ls!
     redir END
@@ -39,7 +39,7 @@ endfunction
 " }}}
 
 " function! s:Window.cleanUpFlowWindow() {{{1
-function! s:Window.cleanUpFlowWindow()
+function! s:Window.cleanUpFlowWindow() abort
     if !exists(t:flowWindowBufferName)
         echom "there is no flow window buffer name"
         return
@@ -107,38 +107,118 @@ function! s:Window.setCodeflowWindowOptions() abort
 endfunction
 " }}}
 
-"TODO(Mitchell):
-" do I like the buffer local flowWindow variable
-" function s:Window.createWindowData() {{{1
-function! s:Window.createWindowData() abort
-    let b:flowWindow = g:Codeflow.New()
-    let b:flowWindow.test = 'test'
+" TODO(Mitchell):
+" function! s:Window.getFlows() {{{1
+function! s:Window.getFlows() abort
+    let globExpression = '.flow/*.flow'
+    let flows = glob(globExpression, 0, 1)
+    let index = 0
+    while index < len(flows)
+        let flows[index] = fnamemodify(flows[index], ':t:r')
+        let index += 1
+    endwhile
+    return flows
 endfunction
 " }}}
 
-" function! s:Window.createFlowWindow() {{{1
+" TODO(Mitchell):
+" function! s:_flows_to_string(flows) {{{1
+function! s:_flows_to_string(flows) abort
+    let flows_string = ""
+    echo "flows to string"
+    echo a:flows
+    
+    for flow in a:flows
+        let flows_string .= flow . "\n"
+    endfor
+    return flows_string
+endfunction
+" }}}
+
+" TODO(Mitchell): 
+" function s:Window.render() {{{1
+function! s:Window.render() abort
+    call self.ui.render()
+endfunction
+" }}}
+
+" function s:Window.createWindowData() {{{1
+function! s:Window.createWindowData() abort
+    let newWindowData = copy(self)
+    let newWindowData.ui = g:CodeflowUI.New(newWindowData)
+    " TODO(Mitchell): give it a UI
+    let newWindowData.children = s:Window.getFlows()
+    echo newWindowData
+    return newWindowData
+endfunction
+" }}}
+
+" function s:Window.ExistsForTab() {{{1
+function! s:Window.ExistsForTab() abort
+    if !exists("t:flowWindowBufferName")
+        return
+    endif
+
+    return !empty(getbufvar(bufnr(t:flowWindowBufferName), "flowWindow"))
+endfunction
+" }}}
+
+" function s:Window.GetWinNumber() {{{1
+function! s:Window.GetWinNumber() abort
+    if exists('t:flowWindowBufferName')
+        return bufwinnr(t:flowWindowBufferName)
+    endif
+    return -1
+endfunction
+" }}} 
+
+" function! s:Window.Close() {{{1
+function! s:Window.Close() abort
+    if !s:Window.IsOpen()
+        return
+    endif
+
+    if winnr('$') !=# 1
+        if winnr() ==# s:Window.GetWinNumber()
+            execute "wincmd p"
+            let l:activeBuffer =  bufnr('')
+            execute "wincmd p"
+        else
+            let l:activeBuffer =  bufnr('')
+        endif
+
+        execute s:Window.GetWinNumber() . ' wincmd w'
+        close
+        execute bufwinnr(l:activeBuffer) . ' wincmd w'
+    else
+        close
+    endif
+endfunction
+" }}}
+
+" function s:Window.IsOpen() {{{1
+function! s:Window.IsOpen() abort
+    return s:Window.GetWinNumber() != -1
+endfunction
+" }}}
+
 " TODO(Mitchell): implement
-function! s:Window.createFlowWindow() abort
+" function! s:Window.CreateCodeflowWindow() {{{1
+function! s:Window.CreateCodeflowWindow() abort
     " TODO(Mitchell): after basic flow window implementation
     " refactor to match basic features needed
     echom "internal create Flow Window"
-    if g:Codeflow.ExistsForTab()
-        call g:Codeflow.Close()
-        call self.cleanUpFlowWindow()
+    if s:Window.ExistsForTab()
+        call s:Window.Close()
+        call s:Window.cleanUpFlowWindow()
     endif
 
-    call self.createWindow()
-    call self.createWindowData()
+    call s:Window.createWindow()
+    let b:flowWindow = s:Window.createWindowData()
+    call b:flowWindow.render()
 endfunction
 " }}}
 
-" function! s:Window.CreateFlowWindow() {{{1
-function! s:Window.CreateFlowWindow() abort
-    echom " external create flow Window"
-    let window = s:Window.New()
-    call window.createFlowWindow()
-endfunction
-" }}}
 
 
 

@@ -1,6 +1,7 @@
 let s:Codeflow = {}
 let g:Codeflow = s:Codeflow
 
+" TODO(Mitchell): this is a codeflow window function
 " function s:Codeflow.ExistsForTab() {{{1
 function! s:Codeflow.ExistsForTab() abort
     if !exists("t:flowWindowBufferName")
@@ -11,6 +12,7 @@ function! s:Codeflow.ExistsForTab() abort
 endfunction
 " }}}
 
+" TODO(Mitchell): this is a codeflow window function
 " function s:Codeflow.GetWinNumber() {{{1
 function! s:Codeflow.GetWinNumber() abort
     if exists('t:flowWindowBufferName')
@@ -20,41 +22,20 @@ function! s:Codeflow.GetWinNumber() abort
 endfunction
 " }}} 
 
+" TODO(Mitchell): this is a codeflow window function
 " function s:Codeflow.IsOpen() {{{1
 function! s:Codeflow.IsOpen() abort
     return s:Codeflow.GetWinNumber() != -1
 endfunction
 " }}}
 
-" function s:Codeflow.Close() {{{1
-function! s:Codeflow.Close() abort
-    if !s:Codeflow.IsOpen()
-        return
-    endif
-
-    if winnr('$') != -1
-        if winnr() == s:Codeflow.GetWinNumber()
-            execute "wincmd p"
-            let l:activeBuffer = bufnr('')
-            execute "wincmd p"
-        else
-            let l:activeBuffer = bufnr('')
-        endif
-
-        execute s:Codeflow.GetWinNumber() . " wincmd w"
-        echom " closing " .  expand('%')
-        close
-        execute bufwinnr(l:activeBuffer) . " wincmd w"
-    else 
-        close
-    endif
-endfunction
-" }}}
-"
+" TODO(Mitchell): this is a codeflow window function
 " function! s:Codeflow.New() {{{1
 function! s:Codeflow.New() abort
     let newCodeflow = copy(self)
-    let newCodeflow.test = '1'
+    let newCodeflow.ui = g:CodeflowUI.New(newCodeflow)
+    " TODO(Mitchell): put the file system slash here
+    let newCodeflow.flowFolder = getcwd() . codeflow#slash() . ".flow"
     return newCodeflow
 endfunction
 " }}}

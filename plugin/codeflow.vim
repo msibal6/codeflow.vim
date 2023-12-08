@@ -50,13 +50,16 @@ call codeflow#ui_glue#setupCommands()
 
 " API {{{1
 " TODO(Mitchell): put all the public commands here
-" function! CodeflowAddKeyMap(options) {{{2
+" }}}
+
+" function! CodeflowAddKeyMap(options) {{{1
 function! CodeflowAddKeyMap(options) abort
     call g:CodeflowKeyMap.Create(a:options)
 endfunction
 " }}}
 
-" function! CodeflowRender() {{{2
+" TODO(Mitchell): window function
+" function! CodeflowRender() {{{1
 function! CodeflowRender() abort
     call codeflow#render()
 endfunction
