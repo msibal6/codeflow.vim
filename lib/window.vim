@@ -8,8 +8,6 @@ function! s:Window.New() abort
 endfunction
 " }}}
 
-" TODO(Mitchell): customizable window height
-" and direction
 "function! s:Window.createWindow() {{{1
 function! s:Window.createWindow() abort
     if !s:Window.ExistsForTab()
@@ -102,9 +100,6 @@ function! s:Window.setCodeflowWindowOptions() abort
     if has('patch-7.4.1925')
         clearjumps
     endif
-
-
-    " TODO(Mitchell): bind the mappings for the opening stuff here
     call self.setCodeflowWindowStatusLine()
 endfunction
 " }}}
@@ -130,6 +125,16 @@ function! s:Window.cursorToFlowWindow()
     execute s:Window.GetWinNumber() . "wincmd w"
 endfunction
 " }}}
+
+" function! s:Window.Focus {{{1
+function! s:Window.Focus()
+    if s:Window.IsOpen()
+        call s:Window.cursorToFlowWindow()
+    else
+        call s:Window.CreateCodeflowWindow()
+    endif
+endfunction
+" }}} 
 
 " function s:Window.Render() {{{1
 function! s:Window.Render() abort
@@ -293,9 +298,12 @@ function! s:Window.CloseCodeflowWindow() abort
 endfunction
 " }}}
 
-" TODO(Mitchell): check for existing flow folder
 " function! s:Window.CreateCodeflowWindow() {{{1
 function! s:Window.CreateCodeflowWindow() abort
+    if !codeflow#checkFlowFolder()
+        return
+    endif
+
     if s:Window.ExistsForTab()
         call s:Window.Close()
         call s:Window.cleanUpFlowWindow()

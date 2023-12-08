@@ -119,6 +119,8 @@ endfunction
 " Why do you call it all the way from ui_glue
 function! codeflow#ui_glue#invokeKeyMap(key) abort " {{{1
     call g:CodeflowKeyMap.Invoke(a:key)
+    " TODO(Mitchell): does this render call need to happen every time
+    " include check for active codeflow wind
     call g:CodeflowWindow.Render()
 endfunction
 " }}}
@@ -146,5 +148,8 @@ endfunction
 
 function! s:deleteFlowNode(node) abort " {{{1
     call system("rm -f " . shellescape(a:node.file))
+    " there is no mention of what happens after deleting the file
+    " so how do we know if its rendered 
+    " deleting the flow node is not responsible though
 endfunction
 "}}}

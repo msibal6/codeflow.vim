@@ -23,31 +23,17 @@ endfunction
 
 " function! s:Flow.startFlow() {{{1
 function! s:Flow.startFlow() abort
-    let flowFolder = getcwd() . codeflow#slash() . ".flow"
-    if getftype(flowFolder) !=# "dir"
-        " create .flow folder
-        let userResponse = input("Do you want to create flow folder at "
-                \ . flowFolder . "?\nPlease enter y/Y if so: ")
-        if tolower(userResponse) ==? "y"
-            call system ("mkdir "  . shellescape(".flow"))
-        else
-            return
-        endif
+    if !codeflow#checkFlowFolder()
+        return
     endif
 
+
     " create new code flow
-    " TODO(Mitchell): maybe create function to establish what is a step consistently
     let t:currentCodeFlow = {}
     " TODO(Mitchell) : check for invalid file names
     " TODO(Mitchell): determine do we need to write this write away
     let t:currentCodeFlow.name = input("\nPlease give flow name\n")
-    let t:currentCodeFlow.file = ".flow/" . t:currentCodeFlow.name . ".flow"
-    execute "pedit " . t:currentCodeFlow.file
-    " TODO(Mitchell): change flow buffer settings to be unlisted
-    " we will stil need a swap file as we do write to it though
-    " TODO(Mitchell): save this writing till end 
-    execute "wincmd k"
-    silent execute "wq"
+    let t:currentCodeFlow.file = ".flow". codeflow#slash() . t:currentCodeFlow.name . ".flow"
 
     " TODO(Mitchell): find duplicates of new state
     " this means that we are opening a new flow while one is already open
@@ -211,8 +197,6 @@ function! s:Flow.saveFlow() abort
     execute "wincmd k"
     normal! ggVGx
     " write file, line number and description for each step
-    " TODO(Mitchell): create hidden buffer to hide buffer listing and it does not have a swap file 
-    " TODO(Mitchell): test out put and set line to if they are better
     for step in t:currentCodeFlow.steps
         execute "normal! i" . step.file . "\n"
         execute "normal! i" . step.lineNumber . "\n"
@@ -246,7 +230,14 @@ function! s:Flow._openFlow(name) abort
     execute "wincmd k"
     let numberLines = line("$")
     let currentLine = 1
-    " TODO(Mitchell): replace with dictionary to make indexing more clear
+    " this is an empty flow file
+    " and we do not need to load from this file
+    if currentLine == numberLines
+        silent execute "wq"
+        call s:Flow.savePrevStatusLine()
+        call s:Flow.updateStatusLine()
+        return
+    endif
     let newStep = {}
 
     while currentLine <= numberLines
@@ -262,13 +253,10 @@ function! s:Flow._openFlow(name) abort
         endif
         let currentLine += 1
     endwhile
-    execute "wq"
+    silent execute "wq"
 
     " Go to first step
     let t:currentCodeFlow.currentStep = 1
-    " TODO(Mitchell): replace with step function about number of step
-    " MITCHNOTE: this might not work as you implement different levels of
-    " steps
     let t:currentCodeFlow.numberSteps = numberLines / 3
     call s:Flow.savePrevStatusLine()
     call s:Flow.updateStatusLine()
@@ -277,9 +265,9 @@ endfunction
 " }}}
 
 " function! OpenFlowCompletion() {{{1
-function! OpenFlowCompletion(lead, line, position) abort
+function! OpenFlowCompletion(lead, line, positihn) abort
     " if user has entered text, complete what they have written
-    let flows = glob(".flow/*.flow", 0, 1)
+    let flows = glob(".flow" . codeflow#slash() . "*.flow", 0, 1)
     call map(flows, {_, val -> fnamemodify(val, ":t:r")})
     call map(flows, {_, val -> fnameescape(val)})
     if len(a:line)

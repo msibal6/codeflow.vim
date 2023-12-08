@@ -17,13 +17,28 @@ function! codeflow#slash() abort
 
         return '\'
     endif
-
     return '/'
 endfunction
 " }}}
 
+" function! codeflow#checkFlowFolder() " {{{1
+function! codeflow#checkFlowFolder() abort
+    let flowFolder = getcwd() . codeflow#slash() . ".flow"
+    if getftype(flowFolder) !=# "dir"
+        " create .flow folder
+        let userResponse = input("Do you want to create flow folder at "
+                \ . flowFolder . "?\nPlease enter y/Y if so: ")
+        if tolower(userResponse) ==? "y"
+            call system ("mkdir "  . shellescape(".flow"))
+            return 1
+        else
+            return 0
+        endif
+    endif
+    return 1
+endfunction
+" }}}
 function! codeflow#loadClassFiles() abort " {{{1
-    " TODO(Mitchell): determine if this will be going as part of autoload
     runtime lib/codeflow.vim
     runtime lib/window.vim
     runtime lib/flow.vim
