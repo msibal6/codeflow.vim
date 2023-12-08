@@ -142,12 +142,22 @@ function! s:Window.render() abort
 endfunction
 " }}}
 
+" function s:Window.renderToString() {{{1
+function! s:Window.renderToString() abort
+    let returnString = ""
+    for flow in self.flows
+        let returnString .= flow . "\n"
+    endfor
+    return returnString
+endfunction
+"}}} 
 " function s:Window.createWindowData() {{{1
 function! s:Window.createWindowData() abort
     let newWindowData = copy(self)
     let newWindowData.ui = g:CodeflowUI.New(newWindowData)
-    " TODO(Mitchell): give it a UI
-    let newWindowData.children = s:Window.getFlows()
+    " TODO(Mitchell): is flowFolder needed
+    let newWindowData.flowFolder = getcwd() . codeflow#slash() . ".flow"
+    let newWindowData.flows = s:Window.getFlows()
     echo newWindowData
     return newWindowData
 endfunction
@@ -202,7 +212,6 @@ function! s:Window.IsOpen() abort
 endfunction
 " }}}
 
-" TODO(Mitchell): implement
 " function! s:Window.CreateCodeflowWindow() {{{1
 function! s:Window.CreateCodeflowWindow() abort
     " TODO(Mitchell): after basic flow window implementation
