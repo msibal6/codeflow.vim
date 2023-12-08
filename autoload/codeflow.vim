@@ -60,7 +60,6 @@ function! codeflow#execute(...) abort
     endif
 
     " TODO(Mitchell): put all this in try catch with errors
-    " TODO(Mitchell): use flow.vim
     let action = a:000[0]
     if action ==# "start-flow"
         if len(a:000) > 1
@@ -68,56 +67,48 @@ function! codeflow#execute(...) abort
             return
         endif
         call g:CodeflowFlow.startFlow()
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "add-step"
         if len(a:000) > 1
             echoerr "Too many args"
             return
         endif
         call g:CodeflowFlow.addStep()
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "go-to-step"
         if len(a:000) > 2
             echoerr "Too many args"
             return
         endif
         call g:CodeflowFlow.goToStep(a:000[1])
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "update-step"
         if len(a:000) > 1
             echoerr "Too many args"
             return
         endif
         call g:CodeflowFlow.updateStep()
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "remove-step"
         if len(a:000) > 1
             echoerr "Too many args"
             return
         endif
         call g:CodeflowFlow.removeStep()
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "save-flow"
         if len(a:000) > 1
             echoerr "Too many args"
             return
         endif
         call g:CodeflowFlow.saveFlow()
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "close-flow"
         if len(a:000) > 1
             echoerr "too many args"
             return
         endif
         call g:CodeflowFlow.closeFlow()
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "open-flow"
         if len(a:000) > 1
             echoerr "too many args"
             return
         endif
         call g:CodeflowFlow.openFlow()
-    " TODO(Mitchell): use flow.vim
     elseif action ==# "open-window"
         if len(a:000) > 1
             echoerr "too many args"
@@ -130,7 +121,7 @@ function! codeflow#execute(...) abort
             echoerr "too many args"
             return
         endif
-        call s:close_flow_window()
+        call g:CodeflowWindow.CloseCodeflowWindow()
     else
         echoerr "Invalid action: " . action
         return

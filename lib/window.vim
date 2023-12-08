@@ -223,6 +223,13 @@ function! s:Window.GetSelected() abort
 endfunction
 " }}}
 
+" function! s:Window.CloseCodeflowWindow() abort
+function! s:Window.CloseCodeflowWindow() abort
+    if s:Window.ExistsForTab()
+        call s:Window.Close()
+        call s:Window.cleanUpFlowWindow()
+    endif
+endfunction
 " TODO(Mitchell): check for existing flow folder
 " function! s:Window.CreateCodeflowWindow() {{{1
 function! s:Window.CreateCodeflowWindow() abort
