@@ -15,10 +15,9 @@ function! s:Flow.updateStatusLine() abort
     " display flow status line
     set statusline=%f
     set statusline+=%=
-    " TODO(Mitchell): change name to name
-    execute "set statusline+=%10(" . t:currentCodeFlow.name . "%)"
-    execute "set statusline+=\\ %2{". t:currentCodeFlow.currentStep . "}/"
-    execute "set statusline+=%2{". t:currentCodeFlow.numberSteps. "}"
+    silent execute "set statusline+=%10(" . t:currentCodeFlow.name->escape(' ') . "%)"
+    silent execute "set statusline+=\\ %2{". t:currentCodeFlow.currentStep . "}/"
+    silent execute "set statusline+=%2{". t:currentCodeFlow.numberSteps. "}"
 endfunction
 " }}}
 
@@ -27,17 +26,20 @@ function! s:Flow.startFlow() abort
     " TODO(Mitchell): check if the .flow folder exists in the file system
     " right now only checks if there is something called .flow
     let flowFolder = getcwd() . "/.flow"
-    if len(getftype(flowFolder))
-    else
+    if getftype(flowFolder) !=# "dir"
         " create .flow folder
         let userResponse = input("Do you want to create flow folder at "
                 \ . flowFolder . "?\nPlease enter y/Y if so\n")
-        if tolower(userResponse) ==# "y"
+        if tolower(userResponse) ==? "y"
             silent execute "!mkdir "  . shellescape(".flow")
+            redraw!
+        else
+            return
         endif
     endif
 
     " create new code flow
+    " XXX maybe create function to establish what is a step consistently
     let t:currentCodeFlow = {}
     " TODO(Mitchell) : check for invalid file names
     let t:currentCodeFlow.name = input("Please give flow name\n")
@@ -45,8 +47,9 @@ function! s:Flow.startFlow() abort
     execute "pedit " . t:currentCodeFlow.file
     " TODO(Mitchell): change flow buffer settings to be unlisted
     " we will stil need a swap file as we do write to it though
+    " TODO(Mitchell): save this writing till end 
     execute "wincmd k"
-    silent execute "wq"
+    execute "wq"
 
     " TODO(Mitchell): find duplicates of new state
     " this means that we are opening a new flow while one is already open
@@ -60,7 +63,7 @@ function! s:Flow.startFlow() abort
 endfunction
 " }}}
 
-" function! s:Flow.addStep() {{{1
+" function! s:Flow.checkActiveFlow() {{{1
 function! s:Flow.checkActiveFlow() abort
     try
         if !exists("t:currentCodeFlow")
@@ -72,29 +75,39 @@ function! s:Flow.checkActiveFlow() abort
 endfunction
 " }}}
 
-" function! s:Flow.addStep() {{{1
-function! s:Flow.addStep() abort
+" function! s:Flow.insertStep() {{{1
+function! s:Flow.insertStep() abort
     call s:Flow.checkActiveFlow()
 
     " create new step
-    let newStep = []
-    " TODO(Mitchell): change this to be relative path from repo root
-    let currentFile = expand("%")
-    let currentLineNumber = line(".")
-    let stepDesc = input("Please describe this step\n")
+    let newStep = {}
 
-    call add(newStep, currentFile)
-    call add(newStep, currentLineNumber)
-    call add(newStep, stepDesc)
+    " TODO(Mitchell): change this to be relative path from repo root
+    let newStep.file = expand("%")
+    let newStep.lineNumber = line(".")
+    " TODO(Mitchell): filter out any nonwhitespace character
+    let newStep.description = input("Please describe this step\n")
 
     " add new step to the current flow
     call insert(t:currentCodeFlow.steps, copy(newStep), t:currentCodeFlow.currentStep)
-
     let t:currentCodeFlow.currentStep += 1
     let t:currentCodeFlow.numberSteps += 1
     call s:Flow.updateStatusLine()
 endfunction
+" }}}
 
+" function! s:Flow.appendStep() {{{1
+function! s:Flow.appendStep() abort
+    call s:Flow.checkActiveFlow()
+
+    " create new step
+    let newStep = {}
+
+    " add new step to the current flow
+    call insert(t:currentCodeFlow.steps, copy(newStep), t:currentCodeFlow.currentStep)
+    let t:currentCodeFlow.currentStep = t:currentCodeFlow.numberSteps
+    call s:Flow.insertStep()
+endfunction
 " }}}
 
 " function! s:Flow.goToStep(stepIndex) {{{1
@@ -113,17 +126,19 @@ function! s:Flow.goToStep(stepIndex) abort
 
     let t:currentCodeFlow.currentStep = a:stepIndex
     let currentStep = t:currentCodeFlow.steps[t:currentCodeFlow.currentStep - 1]
-    " TODO(Mitchell): check if we already have this open and use buffer to
-    " prevent reloading the same file that we are already on
-    execute "edit " . fnameescape(currentStep[0])
-    execute ":" . currentStep[1]
+    if bufnr(currentStep.file)
+        execute "buffer " . fnameescape(currentStep.file)
+    else 
+        execute "edit " . fnameescape(currentStep.file)
+    endif
+    execute ":" . currentStep.lineNumber
     call s:Flow.updateStatusLine()
 endfunction
 
 " }}}
 
 " function! s:Flow.updateStep() {{{1
-function! s:Flow.updateStep() abort
+function! s:Flow.updateStep(shouldAdvance) abort
     call s:Flow.checkActiveFlow()
 
     " Update step
@@ -133,10 +148,12 @@ function! s:Flow.updateStep() abort
 
     " update new data to current step
     let newStep = t:currentCodeFlow.steps[t:currentCodeFlow.currentStep - 1]
-    let newStep[0] = currentFile
-    let newStep[1] = currentLineNumber
-    let newStep[2] = stepDesc
-    call s:Flow.updateStatusLine()
+    let newStep.file = currentFile
+    let newStep.lineNumber = currentLineNumber
+    let newStep.description = stepDesc
+    if a:shouldAdvance ==# 1
+        call s:Flow.goToStep(t:currentCodeFlow.currentStep + 1)
+    endif
 endfunction
 " }}}
 
@@ -159,7 +176,99 @@ endfunction
 
 " }}}
 
-" function! s:Flow.saveFlow() {{{1
+" TODO(Mitchell): update when we have the different step levels
+" will be used at the next step function
+" function! s:Flow.stepOver() {{{1
+function! s:Flow.stepOver() abort
+    " check for active flow
+    " check if we are at the last step
+    call s:Flow.checkActiveFlow()
+    if t:currentCodeFlow.currentStep == t:currentCodeFlow.numberSteps
+        echo "At the last step"
+        return
+    endif
+    " we are not at the last step
+    " go to the next one
+    call s:Flow.goToStep(t:currentCodeFlow.currentStep + 1)
+endfunction
+
+" }}}
+
+" TODO(Mitchell):
+" function! s:Flow.stepInto() {{{1
+function! s:Flow.stepInto() abort
+    call s:Flow.checkActiveFlow()
+
+    if !t:currentCodeFlow.numberSteps
+        echoerr "No flow steps"
+        return
+    endif
+
+    call remove(t:currentCodeFlow.steps, t:currentCodeFlow.currentStep - 1)
+    if t:currentCodeFlow.currentStep == t:currentCodeFlow.numberSteps
+        let t:currentCodeFlow.currentStep -= 1
+    endif
+    let t:currentCodeFlow.numberSteps -= 1
+    call s:Flow.updateStatusLine()
+endfunction
+
+" }}}
+
+" TODO(Mitchell):
+" function! s:Flow.stepOut() {{{1
+function! s:Flow.stepOut() abort
+    call s:Flow.checkActiveFlow()
+endfunction
+
+" }}}
+
+" TODO(Mitchell): update when we have the different step levels
+" will be used at the next step function
+" function! s:Flow.prevOver() {{{1
+function! s:Flow.prevOver() abort
+    " check for active flow
+    " check if we are at the last step
+    call s:Flow.checkActiveFlow()
+    if t:currentCodeFlow.currentStep ==# 1
+        echo "At the first step for current flow"
+        return
+    endif
+    " we are not at the last step
+    " go to the next one
+    call s:Flow.goToStep(t:currentCodeFlow.currentStep - 1)
+endfunction
+
+" }}}
+
+" TODO(Mitchell):
+" function! s:Flow.prevInto() {{{1
+function! s:Flow.prevInto() abort
+    call s:Flow.checkActiveFlow()
+
+    if !t:currentCodeFlow.numberSteps
+        echoerr "No flow steps"
+        return
+    endif
+
+    call remove(t:currentCodeFlow.steps, t:currentCodeFlow.currentStep - 1)
+    if t:currentCodeFlow.currentStep == t:currentCodeFlow.numberSteps
+        let t:currentCodeFlow.currentStep -= 1
+    endif
+    let t:currentCodeFlow.numberSteps -= 1
+    call s:Flow.updateStatusLine()
+endfunction
+
+" }}}
+
+" TODO(Mitchell):
+" function! s:Flow.prevOut() {{{1
+function! s:Flow.prevOut() abort
+    call s:Flow.checkActiveFlow()
+endfunction
+
+" }}}
+
+" function! s:Flow.saveFlow() {{{
 function! s:Flow.saveFlow() abort
     call s:Flow.checkActiveFlow()
 
@@ -171,9 +280,9 @@ function! s:Flow.saveFlow() abort
     " TODO(Mitchell): create hidden buffer to hide buffer listing and it does not have a swap file 
     " TODO(Mitchell): test out put and set line to if they are better
     for step in t:currentCodeFlow.steps
-        execute "normal! i" . step[0] . "\n"
-        execute "normal! i" . step[1] . "\n"
-        execute "normal! i" . step[2] . "\n"
+        execute "normal! i" . step.file . "\n"
+        execute "normal! i" . step.lineNumber . "\n"
+        execute "normal! i" . step.description . "\n"
     endfor
     " Delete the last empty line
     normal! Gdd
@@ -198,15 +307,18 @@ function! s:Flow._openFlow(name) abort
     let numberLines = line("$")
     let currentLine = 1
     " TODO(Mitchell): replace with dictionary to make indexing more clear
-    let newStep = []
+    let newStep = {}
 
     while currentLine <= numberLines
         let currentLineText = getline(currentLine)
-        call add(newStep, currentLineText)
-        if currentLine % 3 == 0
+        if currentLine % 3 == 1
+            let newStep.file = currentLineText
+        elseif currentLine % 3 == 2
+            let newStep.lineNumber = currentLineText
+        elseif currentLine % 3 == 0
+            let newStep.description = currentLineText
             " TODO(Mitchell): replace deepcopy with copy as test
             call add(t:currentCodeFlow.steps, deepcopy(newStep))
-            let newStep = []
         endif
         let currentLine += 1
     endwhile
@@ -224,9 +336,27 @@ function! s:Flow._openFlow(name) abort
 endfunction
 " }}}
 
+" function! OpenFlowCompletion() {{{1
+function! OpenFlowCompletion(lead, line, position) abort
+    " if user has entered text, complete what they have written
+    let flows = glob(".flow/*.flow", 0, 1)
+    call map(flows, {_, val -> fnamemodify(val, ":t:r")})
+    call map(flows, {_, val -> fnameescape(val)})
+    if len(a:line)
+        return matchfuzzy(flows, a:line)
+    else 
+        return flows
+    endif
+endfunction
+
+" }}}
+
 " function! s:Flow.openFlow() {{{1
 function! s:Flow.openFlow() abort
-    let chosenFlow = input("Please give flow name\n")
+    let chosenFlow = input(
+                \ "Please give flow name\n",
+                \ "",
+                \ "customlist,OpenFlowCompletion")
 
     if !len(chosenFlow)
         echoerr "no flow given"

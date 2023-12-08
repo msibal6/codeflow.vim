@@ -1,8 +1,82 @@
+let s:commandList =
+            \ [
+                \ {
+                    \ 'action'   : 'start',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.startFlow"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'save',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.saveFlow"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'close',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.closeFlow"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'open',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.openFlow"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'appendStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.appendStep"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'insertStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.insertStep"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'goToStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.goToStep"),
+                    \ 'argsNeeded' : 1,
+                    \ },
+                \ {
+                    \ 'action'   : 'prevStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.prevOver"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'nextStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.stepOver"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'updateStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.updateStep"),
+                    \ 'argsNeeded' : 1,
+                    \ },
+                \ {
+                    \ 'action'   : 'removeStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.removeStep"),
+                    \ 'argsNeeded' : 0,
+                    \ }
+                \ ]
+let g:CodeflowCommandList = s:commandList
 
-" TODO(Mitchell): command completion
+" function! s:commandComplete(lead, line, position) " {{{1
+function! s:codeflowComplete(lead, line, position) abort
+    let args = split(a:line)
+    echom len(args)
+    " return all valid commands
+    if len(args) == 1
+        return mapnew(s:commandList, {_,val -> val.action})
+    " return matching valid commands
+    elseif len(args) == 2
+        return matchfuzzy(
+                    \ mapnew(s:commandList, { _, val -> val.action }),
+                    \ a:lead)
+    endif
+endfunction
+" }}}
+
 " function! codeflow#ui_glue#setupCommands() {{{1
 function! codeflow#ui_glue#setupCommands() abort
-    command! -nargs=* -bar -bang -complete=augroup Codeflow call codeflow#execute(<f-args>)
+    command! -nargs=* -bar -bang -complete=customlist,s:codeflowComplete Codeflow call codeflow#execute(<f-args>)
 endfunction
 " }}}
 
@@ -13,7 +87,7 @@ function! s:SID() abort
     endif
     return s:sid
 endfun
-" }}} 
+" }}}
 
 
 " TODO(Mitchell): do we want this to be in autoload

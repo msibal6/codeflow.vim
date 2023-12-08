@@ -1,8 +1,8 @@
 " Copyright (c) 2023 Mitchell Sibal
-"
+
 " MIT License
-" I do not know what the MIT license even is actually
-" Second start for Codeflow
+" TODO(Mitchell): figure out the MIT license
+" Codeflow Initialization
 
 " Script Init {{{1
 scriptencoding utf-8
@@ -41,7 +41,7 @@ call codeflow#loadClassFiles()
 " }}}
 "}}}
 
-" Commands {{{1
+" User Command Setup {{{1
 call codeflow#ui_glue#setupCommands()
 " }}}
 
@@ -59,15 +59,28 @@ call codeflow#ui_glue#setupCommands()
 call codeflow#postSourceActions()
 " }}}
 
-function! TestCodeflow() abort
-    execute "Codeflow start-flow"
-    execute ":10"
-    execute "Codeflow add-step"
-    execute ":20"
-    execute "Codeflow add-step"
-    execute ":30"
-    execute "Codeflow add-step"
-    execute "Codeflow go-to-step 1"
-    execute ":45"
-    execute "Codeflow update-step"
+" function! InputTest() abort " {{{1
+function! InputTest() abort
+    let text = input("prompt\n", "prefill", "customlist,CompleteThis")
 endfunction
+" }}}
+
+" function! TestCodeflow() abort " {{{1
+function! TestCodeflow() abort
+    execute "set number"
+    execute "Codeflow start"
+    execute ":10"
+    execute "Codeflow appendStep"
+    execute ":20"
+    execute "Codeflow appendStep"
+    execute ":30"
+    execute "Codeflow appendStep"
+    execute "Codeflow goToStep 1"
+    execute ":45"
+    execute "Codeflow updateStep 0"
+    execute "Codeflow goToStep 2"
+    execute "Codeflow close"
+    execute "Codeflow open"
+    echom line('.')
+endfunction
+" }}}

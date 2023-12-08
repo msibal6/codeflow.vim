@@ -37,13 +37,17 @@ function! codeflow#postSourceActions() abort " {{{1
 endfunction
 " }}}
 
-function! s:checkArgLimit(args, limit) abort " {{{1
+function! s:checkArgCount(numArgs, numArgsNeeded) abort " {{{1
     try
-        if len(a:args) > a:limit
+        if a:numArgs > a:numArgsNeeded
             throw "Too many arguments"
+        elseif a:numArgs < a:numArgsNeeded
+            throw "Not enough arguments"
         endif
-    catch /\v^Too/
+    catch /Too/
         throw "Too many arguments"
+    catch /Not/
+        throw "Not enough arguments"
     endtry
 endfunction
 " }}}
@@ -51,51 +55,29 @@ endfunction
 function! codeflow#execute(...) abort " {{{1
     try 
         let action = a:1
-        if action ==# "start-flow"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowFlow.startFlow()
-        elseif action ==# "add-step"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowFlow.addStep()
-        elseif action ==# "go-to-step"
-            call s:checkArgLimit(a:000, 2)
-            call g:CodeflowFlow.goToStep(a:2)
-        elseif action ==# "update-step"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowFlow.updateStep()
-        elseif action ==# "remove-step"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowFlow.removeStep()
-        elseif action ==# "save-flow"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowFlow.saveFlow()
-        elseif action ==# "close-flow"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowFlow.closeFlow()
-        elseif action ==# "open-flow"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowFlow.openFlow()
-        elseif action ==# "open-window"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowWindow.CreateCodeflowWindow()
-            " TODO(Mitchell): use flow.vim
-        elseif action ==# "close-window"
-            call s:checkArgLimit(a:000, 1)
-            call g:CodeflowWindow.CloseCodeflowWindow()
-        else
-            throw "Invalid action"
-        endif
+        try 
+            let validCommand = filter(copy(g:CodeflowCommandList),
+                        \ {_, val -> val.action ==# action})[0]
+            call s:checkArgCount(a:0 - 1, validCommand.argsNeeded)
+            if len(a:000) == 2
+                call validCommand.internalFunction(a:2)
+            else 
+                call validCommand.internalFunction()
+            endif
+        " thrown when validCommand assignment accesses out of range index
+        " because action does not match any valid actions
+        catch /\vE684/
+            " throw "Invalid action"
+            echoerr "Invalid action: " . action
+        endtry
     catch /\vNo active flow/
         echoerr "No active flow" 
     catch /\v^E121/
         echoerr "No action" 
-    catch /\v^Invalid action/
-        echoerr "Invalid action: " . action
     catch /\v^Too/
         echoerr "Too many arguments for " . action
-    catch 
-        echoerr v:exception
+    catch /\v^Not enough/
+        echoerr "Not enough arguments for " . action
     endtry
 endfunction
 "}}}
-
