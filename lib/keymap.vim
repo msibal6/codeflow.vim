@@ -5,22 +5,21 @@ let g:CodeflowKeyMap = s:KeyMap
 let s:keyMaps = {}
 
 "FUNCTION: KeyMap.FindFor(key, scope) {{{1
-function! s:KeyMap.FindFor(key, scope)
+function! s:KeyMap.FindFor(key, scope) abort
     return get(s:keyMaps, a:key . a:scope, {})
 endfunction
 "}}}
 
 "FUNCTION: KeyMap.BindAll() {{{1
-function! s:KeyMap.BindAll()
-    for i in values(s:keyMaps)
-        echo i
-        call i.bind()
+function! s:KeyMap.BindAll() abort
+    for keyMap values(s:keyMaps)
+        call keyMap.bind()
     endfor
 endfunction
 "}}}
 
 "FUNCTION: KeyMap.bind() {{{1
-function! s:KeyMap.bind()
+function! s:KeyMap.bind() abort
     " If the key sequence we're trying to map contains any '<>' notation, we
     " must replace each of the '<' characters with '<lt>' to ensure the string
     " is not translated into its corresponding keycode during the later part
@@ -45,15 +44,15 @@ endfunction
 "}}}
 
 "FUNCTION: KeyMap.Remove(key, scope) {{{1
-function! s:KeyMap.Remove(key, scope)
+function! s:KeyMap.Remove(key, scope) abort
     return remove(s:keyMaps, a:key . a:scope)
 endfunction
 
 "}}}
 
-"FUNCTION: KeyMap.invoke() {{{1
-"Call the KeyMaps callback function
-function! s:KeyMap.invoke(...)
+" function! s:KeyMap.invoke(...) {{{1
+" Call the KeyMaps callback function
+function! s:KeyMap.invoke(...) abort
     let l:Callback = type(self.callback) ==# type(function('tr')) ? self.callback : function(self.callback)
     if a:0
         call l:Callback(a:1)
@@ -64,6 +63,7 @@ endfunction
 
 "}}}
 
+" TODO(Mitchell): update the comment
 "FUNCTION: KeyMap.Invoke() {{{1
 "Find a keymapping for a:key and the current scope invoke it.
 "
@@ -75,38 +75,37 @@ endfunction
 "If a keymap has the scope of 'all' then it will be called if no other keymap
 "is found for a:key and the scope.
 " TODO(Mitchell):
-function! s:KeyMap.Invoke(key)
-    echom "KeyMap Invoke"
-
+function! s:KeyMap.Invoke(key) abort
     "required because clicking the command window below another window still
     "invokes the <LeftRelease> mapping - but changes the window cursor
     "is in first
     "
+    " TODO(Mitchell): determine what vim bug this is
+    " do you need to do this check
     "TODO: remove this check when the vim bug is fixed
     if !exists('b:flowWindow')
-        echom " nerdtree does not exists for buff"
         return {}
     endif
 
-    "TODO(Mitchell): 
     let node = g:CodeflowWindow.GetSelected()
+
+    if empty(node)
+        return
+    endif
+
     if node.isFlow
         "try file node
         let km = s:KeyMap.FindFor(a:key, 'flow')
         if !empty(km)
             return km.invoke(node)
         endif
-
+    elseif node.isStep
     endif
-
-
 endfunction
-
-"}}}
+" }}}
 
 "FUNCTION: KeyMap.Create(options) {{{1
-function! s:KeyMap.Create(options)
-    echom "keymap Create"
+function! s:KeyMap.Create(options) abort
     let opts = extend({'scope': 'all', 'quickhelpText': ''}, copy(a:options))
 
     "dont override other mappings unless the 'override' option is given
@@ -125,14 +124,10 @@ endfunction
 
 "}}}
 
-"FUNCTION: KeyMap.Add(keymap) {{{1
-function! s:KeyMap.Add(keymap)
-    " in the keymaps
-    "   at key '<key><scope>'
-    "   put this value a:keymap
+" function! s:KeyMap.Add(keymap) abort " {{{1
+function! s:KeyMap.Add(keymap) abort
     let s:keyMaps[a:keymap.key . a:keymap.scope] = a:keymap
-    echo s:keyMaps
 endfunction
+" }}}
 
 " vim: set sw=4 sts=4 et fdm=marker:
-"}}}

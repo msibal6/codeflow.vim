@@ -3,15 +3,14 @@ let g:CodeflowWindow = s:Window
 
 " function! s:Window.New() {{{1
 function! s:Window.New() abort
-    echom "window new "
     let newWindow = copy(self)
     return newWindow
 endfunction
 " }}}
 
+" TODO(Mitchell): customizable window height
 "function! s:Window.createWindow() {{{1
 function! s:Window.createWindow() abort
-
     if !s:Window.ExistsForTab()
         let t:flowWindowBufferName = self.nextBufferName()
         silent! execute 'topleft  vertical 20 new'
@@ -23,7 +22,6 @@ function! s:Window.createWindow() abort
 
     setlocal winfixwidth
 
-    " TODO(Mitchell): active the bindings here
     call g:CodeflowKeyMap.BindAll()
     call self.setCodeflowWindowOptions()
 endfunction
@@ -43,7 +41,6 @@ endfunction
 " function! s:Window.cleanUpFlowWindow() {{{1
 function! s:Window.cleanUpFlowWindow() abort
     if !exists(t:flowWindowBufferName)
-        echom "there is no flow window buffer name"
         return
     endif
 
@@ -52,8 +49,7 @@ function! s:Window.cleanUpFlowWindow() abort
     " we have a buffer with this name
     if bufferNumber != -1
 
-        "nerdtree buf may be mirrored/displayed elsewhere
-        "why do we need to do this
+        "codeflow window buf may be mirrored/displayed elsewhere
         if self.isBufferHidden(bufferNumber)
             exec 'bwipeout ' . bufferNumber
         endif
@@ -145,7 +141,6 @@ function! s:Window.createWindowData() abort
     let newWindowData.ui = g:CodeflowUI.New(newWindowData)
     let newWindowData.flowFolder = getcwd() . codeflow#slash() . ".flow"
     let newWindowData.flows = s:Window.getFlows()
-    echo newWindowData
     return newWindowData
 endfunction
 " }}}
@@ -201,24 +196,27 @@ endfunction
 
 " TODO(Mitchell):
 " function! s:Window.GetSelected() {{{1
+" returns node object for selected step or flow
+" returns empty object if there is no node to be selected
 function! s:Window.GetSelected() abort
     let newObject = {}
-    echom "window get selected"
     if !exists('t:currentCodeFlow')
-        echom "window get selected no current code flow"
+        " check for a flow node
         " get the file
-        let flowFile = ".flow" . codeflow#slash() . getline('.') . ".flow"
-        if !empty(glob(flowFile))
+        let file = ".flow" . codeflow#slash() . getline('.') . ".flow"
+        if !empty(glob(file))
             let newObject.isFlow = 1
-            let newObject.flowFile = flowFile
-            let newObject.flowName = getline('.')
+            let newObject.file = file
+            let newObject.name = getline('.')
         else 
             let newObject.isFlow = 0
         endif
     else
         " TODO(Mitchell): implement selecting step
+        " check for a step node
         let newObject.isStep = 0
     endif
+    " returns empty object if there was neither
     return newObject
 endfunction
 " }}}
@@ -230,12 +228,10 @@ function! s:Window.CloseCodeflowWindow() abort
         call s:Window.cleanUpFlowWindow()
     endif
 endfunction
+
 " TODO(Mitchell): check for existing flow folder
 " function! s:Window.CreateCodeflowWindow() {{{1
 function! s:Window.CreateCodeflowWindow() abort
-    " TODO(Mitchell): after basic flow window implementation
-    " refactor to match basic features needed
-    echom "internal create Flow Window"
     if s:Window.ExistsForTab()
         call s:Window.Close()
         call s:Window.cleanUpFlowWindow()

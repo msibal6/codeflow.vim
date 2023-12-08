@@ -3,7 +3,6 @@ let g:CodeflowFlow = s:Flow
 
 " function! s:Flow.savePrevStatusLine() {{{1
 function! s:Flow.savePrevStatusLine() abort
-    " save previous statusline
     let t:previousStatusLine =
                 \ { 'laststatus':    &laststatus,
                 \   'statusline':   &statusline,
@@ -16,9 +15,8 @@ function! s:Flow.updateStatusLine() abort
     " display flow status line
     set statusline=%f
     set statusline+=%=
-    " TODO(Mitchell): decide on a line number status line field
-    " TODO(Mitchell): change flowName to name
-    execute "set statusline+=%10(" . t:currentCodeFlow.flowName . "%)"
+    " TODO(Mitchell): change name to name
+    execute "set statusline+=%10(" . t:currentCodeFlow.name . "%)"
     execute "set statusline+=\\ %2{". t:currentCodeFlow.currentStep . "}/"
     execute "set statusline+=%2{". t:currentCodeFlow.numberSteps. "}"
 endfunction
@@ -26,12 +24,8 @@ endfunction
 
 " function! s:Flow.startFlow() {{{1
 function! s:Flow.startFlow() abort
-    if (len(a:000))
-        echoerr "too many arguments"
-        return
-    endif
-
-    " check for .flow folder
+    " TODO(Mitchell): check if the .flow folder exists in the file system
+    " right now only checks if there is something called .flow
     let flowFolder = getcwd() . "/.flow"
     if len(getftype(flowFolder))
     else
@@ -46,13 +40,13 @@ function! s:Flow.startFlow() abort
     " create new code flow
     let t:currentCodeFlow = {}
     " TODO(Mitchell) : check for invalid file names
-    let t:currentCodeFlow.flowName = input("Please give flow name\n")
-    let t:currentCodeFlow.flowFile = ".flow/" . t:currentCodeFlow.flowName . ".flow"
-    execute "pedit " . t:currentCodeFlow.flowFile
+    let t:currentCodeFlow.name = input("Please give flow name\n")
+    let t:currentCodeFlow.file = ".flow/" . t:currentCodeFlow.name . ".flow"
+    execute "pedit " . t:currentCodeFlow.file
+    " TODO(Mitchell): change flow buffer settings to be unlisted
+    " we will stil need a swap file as we do write to it though
     execute "wincmd k"
     silent execute "wq"
-
-    " TODO(Mitchell): check on for current Code flow
 
     " TODO(Mitchell): find duplicates of new state
     " this means that we are opening a new flow while one is already open
@@ -67,11 +61,20 @@ endfunction
 " }}}
 
 " function! s:Flow.addStep() {{{1
+function! s:Flow.checkActiveFlow() abort
+    try
+        if !exists("t:currentCodeFlow")
+            throw "No Active Flow"
+        endif
+    catch /\v^No/
+        throw "No active flow"
+    endtry
+endfunction
+" }}}
+
+" function! s:Flow.addStep() {{{1
 function! s:Flow.addStep() abort
-    if !exists("t:currentCodeFlow")
-        echoerr "No active flow"
-        return
-    endif
+    call s:Flow.checkActiveFlow()
 
     " create new step
     let newStep = []
@@ -96,6 +99,8 @@ endfunction
 
 " function! s:Flow.goToStep(stepIndex) {{{1
 function! s:Flow.goToStep(stepIndex) abort
+    call s:Flow.checkActiveFlow()
+
     if !a:stepIndex
         echoerr "No flow index given"
         return
@@ -119,10 +124,7 @@ endfunction
 
 " function! s:Flow.updateStep() {{{1
 function! s:Flow.updateStep() abort
-    if !exists("t:currentCodeFlow")
-        echoerr "No active flow"
-        return
-    endif
+    call s:Flow.checkActiveFlow()
 
     " Update step
     let currentFile = expand("%")
@@ -135,16 +137,12 @@ function! s:Flow.updateStep() abort
     let newStep[1] = currentLineNumber
     let newStep[2] = stepDesc
     call s:Flow.updateStatusLine()
-    echo t:currentCodeFlow.steps
 endfunction
 " }}}
 
 " function! s:Flow.removeStep() {{{1
 function! s:Flow.removeStep() abort
-    if !exists("t:currentCodeFlow")
-        echoerr "No active flow"
-        return
-    endif
+    call s:Flow.checkActiveFlow()
 
     if !t:currentCodeFlow.numberSteps
         echoerr "No flow steps"
@@ -157,15 +155,16 @@ function! s:Flow.removeStep() abort
     endif
     let t:currentCodeFlow.numberSteps -= 1
     call s:Flow.updateStatusLine()
-    echo t:currentCodeFlow.steps
 endfunction
 
 " }}}
 
 " function! s:Flow.saveFlow() {{{1
 function! s:Flow.saveFlow() abort
+    call s:Flow.checkActiveFlow()
+
     " clear flow file
-    execute "pedit " . t:currentCodeFlow.flowFile
+    execute "pedit " . t:currentCodeFlow.file
     execute "wincmd k"
     normal! ggVGx
     " write file, line number and description for each step
@@ -182,17 +181,19 @@ function! s:Flow.saveFlow() abort
 endfunction
 " }}}
 
-" function! s:Flow._openFlow(flowName) {{{1
-function! s:Flow._openFlow(flowName) abort
+" function! s:Flow._openFlow(name) {{{1
+function! s:Flow._openFlow(name) abort
     let t:currentCodeFlow = {}
-    let t:currentCodeFlow.flowName = a:flowName
-    let t:currentCodeFlow.flowFile = ".flow" . codeflow#slash(). t:currentCodeFlow.flowName . ".flow"
+    let t:currentCodeFlow.name = a:name
+    let t:currentCodeFlow.file = 
+                \ ".flow" . codeflow#slash() 
+                \ . t:currentCodeFlow.name . ".flow"
     let t:currentCodeFlow.steps = []
-    let t:currentCodeFlow.currenteStep = 0
+    let t:currentCodeFlow.currentStep = 0
     let t:currentCodeFlow.numberSteps = 0
 
     " Read flow file
-    execute "pedit " . t:currentCodeFlow.flowFile
+    execute "pedit " . t:currentCodeFlow.file
     execute "wincmd k"
     let numberLines = line("$")
     let currentLine = 1
@@ -214,6 +215,8 @@ function! s:Flow._openFlow(flowName) abort
     " Go to first step
     let t:currentCodeFlow.currentStep = 1
     " TODO(Mitchell): replace with step function about number of step
+    " MITCHNOTE: this might not work as you implement different levels of
+    " steps
     let t:currentCodeFlow.numberSteps = numberLines / 3
     call s:Flow.savePrevStatusLine()
     call s:Flow.updateStatusLine()
@@ -240,24 +243,18 @@ endfunction
 
 " function! s:Flow.closeFlow() {{{1
 function! s:Flow.closeFlow() abort
-    " TODO(Mitchell): change to function to throw error for no active flow
-    if !exists("t:currentCodeFlow")
-        echoerr "No active flow"
-        return
-    endif
-
+    call s:Flow.checkActiveFlow()
     call s:Flow.saveFlow()
 
-    unlet t:currentCodeFlow.flowName
-    unlet t:currentCodeFlow.flowFile
+    " free and unlet to return to inactive flow state
+    unlet t:currentCodeFlow.name
+    unlet t:currentCodeFlow.file
     unlet t:currentCodeFlow.steps
     unlet t:currentCodeFlow.currentStep
     unlet t:currentCodeFlow.numberSteps
     unlet t:currentCodeFlow
 
     " Restore previous state
-    echom t:previousStatusLine['statusline']
-    echom t:previousStatusLine['laststatus']
     let &statusline = t:previousStatusLine['statusline']
     let &laststatus = t:previousStatusLine['laststatus']
     unlet t:previousStatusLine

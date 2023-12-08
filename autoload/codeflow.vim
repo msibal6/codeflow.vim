@@ -1,17 +1,15 @@
-" FUNCTION: codeflow#runningWindows() {{{1
-function! codeflow#runningWindows() abort
+function! codeflow#runningWindows() abort " {{{1
     return has('win16') || has('win32') || has('win64')
 endfunction
 " }}}
 
-"FUNCTION: codeflow#runningCygwin() {{{1
-function! codeflow#runningCygwin() abort
+function! codeflow#runningCygwin() abort " {{{1
     return has('win32unix')
 endfunction
 " }}}
 
-" function!codeflow#slash() abort {{{1
-function!codeflow#slash() abort
+" function! codeflow#slash() " {{{1
+function! codeflow#slash() abort
     if codeflow#runningWindows()
         if exists('+shellslash') && &shellslash
             return '/'
@@ -24,110 +22,80 @@ function!codeflow#slash() abort
 endfunction
 " }}}
 
-" TODO(Mitchell): maybe this can run on first all or something
-" we see
-" FUNCTION: codeflow#loadClassFiles() {{{1
-function! codeflow#loadClassFiles() abort
+function! codeflow#loadClassFiles() abort " {{{1
+    " TODO(Mitchell): determine if this will be going as part of autoload
     runtime lib/codeflow.vim
     runtime lib/window.vim
     runtime lib/flow.vim
     runtime lib/ui.vim
     runtime lib/keymap.vim
-    " TODO(Mitchell): put all the class files here
-    " if we are going to be doing OOP we might not need it now
-    " TODO(Mitchell):
-    " flow window
-    " flow node
-    " step node
 endfunction
 " }}}
 
-"FUNCTION: codeflow#postSourceActions() {{{1
-function! codeflow#postSourceActions() abort
+function! codeflow#postSourceActions() abort " {{{1
     call codeflow#ui_glue#createDefaultBindings()
 endfunction
 " }}}
 
+function! s:checkArgLimit(args, limit) abort " {{{1
+    try
+        if len(a:args) > a:limit
+            throw "Too many arguments"
+        endif
+    catch /\v^Too/
+        throw "Too many arguments"
+    endtry
+endfunction
+" }}}
 
-
-" function! codeflow#execute() {{{1
-function! codeflow#execute(...) abort
-    echom 'in the autoload'
-    echo a:000
-    if (len(a:000)) == 0
-        echoerr "No action"
-        return
-    endif
-
-    " TODO(Mitchell): put all this in try catch with errors
-    let action = a:000[0]
-    if action ==# "start-flow"
-        if len(a:000) > 1
-            echoerr "Too many args"
-            return
+function! codeflow#execute(...) abort " {{{1
+    try 
+        let action = a:1
+        if action ==# "start-flow"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowFlow.startFlow()
+        elseif action ==# "add-step"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowFlow.addStep()
+        elseif action ==# "go-to-step"
+            call s:checkArgLimit(a:000, 2)
+            call g:CodeflowFlow.goToStep(a:2)
+        elseif action ==# "update-step"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowFlow.updateStep()
+        elseif action ==# "remove-step"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowFlow.removeStep()
+        elseif action ==# "save-flow"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowFlow.saveFlow()
+        elseif action ==# "close-flow"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowFlow.closeFlow()
+        elseif action ==# "open-flow"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowFlow.openFlow()
+        elseif action ==# "open-window"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowWindow.CreateCodeflowWindow()
+            " TODO(Mitchell): use flow.vim
+        elseif action ==# "close-window"
+            call s:checkArgLimit(a:000, 1)
+            call g:CodeflowWindow.CloseCodeflowWindow()
+        else
+            throw "Invalid action"
         endif
-        call g:CodeflowFlow.startFlow()
-    elseif action ==# "add-step"
-        if len(a:000) > 1
-            echoerr "Too many args"
-            return
-        endif
-        call g:CodeflowFlow.addStep()
-    elseif action ==# "go-to-step"
-        if len(a:000) > 2
-            echoerr "Too many args"
-            return
-        endif
-        call g:CodeflowFlow.goToStep(a:000[1])
-    elseif action ==# "update-step"
-        if len(a:000) > 1
-            echoerr "Too many args"
-            return
-        endif
-        call g:CodeflowFlow.updateStep()
-    elseif action ==# "remove-step"
-        if len(a:000) > 1
-            echoerr "Too many args"
-            return
-        endif
-        call g:CodeflowFlow.removeStep()
-    elseif action ==# "save-flow"
-        if len(a:000) > 1
-            echoerr "Too many args"
-            return
-        endif
-        call g:CodeflowFlow.saveFlow()
-    elseif action ==# "close-flow"
-        if len(a:000) > 1
-            echoerr "too many args"
-            return
-        endif
-        call g:CodeflowFlow.closeFlow()
-    elseif action ==# "open-flow"
-        if len(a:000) > 1
-            echoerr "too many args"
-            return
-        endif
-        call g:CodeflowFlow.openFlow()
-    elseif action ==# "open-window"
-        if len(a:000) > 1
-            echoerr "too many args"
-            return
-        endif
-        call g:CodeflowWindow.CreateCodeflowWindow()
-    " TODO(Mitchell): use flow.vim
-    elseif action ==# "close-window"
-        if len(a:000) > 1
-            echoerr "too many args"
-            return
-        endif
-        call g:CodeflowWindow.CloseCodeflowWindow()
-    else
+    catch /\vNo active flow/
+        echoerr "No active flow" 
+    catch /\v^E121/
+        echoerr "No action" 
+    catch /\v^Invalid action/
         echoerr "Invalid action: " . action
-        return
-    endif
+    catch /\v^Too/
+        echoerr "Too many arguments for " . action
+    catch 
+        echoerr v:exception
+    endtry
 endfunction
 "}}}
 
-" TODO(Mitchell): consider putting all classes in autoload
-" if we do not need them, do use them

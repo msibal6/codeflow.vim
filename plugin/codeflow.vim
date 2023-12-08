@@ -10,6 +10,7 @@ scriptencoding utf-8
 if exists('loaded_codeflow')
     finish
 endif
+
 if v:version < 703
     echoerr "Codeflow: this plugin requires vim >= 7.3. DOWNLOAD IT! You'll thank me later!"
     finish
@@ -28,14 +29,14 @@ let g:CodeflowOpen = get(g:, 'CodeflowOpen', 'o')
 
 
 if !codeflow#runningWindows() && !codeflow#runningCygwin()
-    let g:NERDTreeDirArrowExpandable  = get(g:, 'NERDTreeDirArrowExpandable',  '▸')
-    let g:NERDTreeDirArrowCollapsible = get(g:, 'NERDTreeDirArrowCollapsible', '▾')
+    let g:CodeflowStepArrowExpandable  = get(g:, 'CodeflowStepArrowExpandable',  '▸')
+    let g:CodeflowStepArrowCollapsible = get(g:, 'CodeflowStepArrowCollapsible', '▾')
 else
-    let g:NERDTreeDirArrowExpandable  = get(g:, 'NERDTreeDirArrowExpandable',  '+')
-    let g:NERDTreeDirArrowCollapsible = get(g:, 'NERDTreeDirArrowCollapsible', '~')
+    let g:CodeflowStepArrowExpandable  = get(g:, 'CodeflowStepArrowExpandable',  '+')
+    let g:CodeflowStepArrowCollapsible = get(g:, 'CodeflowStepArrowCollapsible', '~')
 endif
 
-" Load class files{{{2
+" Load class files {{{2
 call codeflow#loadClassFiles()
 " }}}
 "}}}

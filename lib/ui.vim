@@ -1,8 +1,7 @@
 let s:UI = {}
 let g:CodeflowUI = s:UI
 
-" FUNCTION: s:UI.new(flowWindow) {{{1
-function! s:UI.New(flowWindow)
+function! s:UI.New(flowWindow) abort " {{{1
     let newUI = copy(self)
     let newUI.flowWindow = a:flowWindow
     return newUI
@@ -11,10 +10,7 @@ endfunction
 
 " TODO(Mitchell):
 " FUNCTION: s:UI.render() {{{1
-function! s:UI.render()
-    setlocal noreadonly modifiable
-
-    " render time {{{3
+function! s:UI.render() abort
     setlocal noreadonly modifiable
 
     " restore the view exactly how it was
@@ -35,9 +31,7 @@ function! s:UI.render()
     call cursor(line('.')+1, col('.'))
 
     " draw the tree
-    " TODO(Mitchell): draw the 
     silent put =self.flowWindow.renderToString()
-
 
     " delete the blank line at the top of the buffer
     silent 1,1delete _
