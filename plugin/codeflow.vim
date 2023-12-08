@@ -1,8 +1,5 @@
 " Copyright (c) 2023 Mitchell Sibal
-
 " MIT License
-" TODO(Mitchell): figure out the MIT license
-" Codeflow Initialization
 
 " Script Init {{{1
 scriptencoding utf-8
@@ -27,7 +24,6 @@ let g:CodeflowOpen = get(g:, 'CodeflowOpen', 'o')
 let g:CodeflowDelete = get(g:, 'CodeflowDelete', 'd')
 " }}}
 
-
 if !codeflow#runningWindows() && !codeflow#runningCygwin()
     let g:CodeflowStepArrowExpandable  = get(g:, 'CodeflowStepArrowExpandable',  '▸')
     let g:CodeflowStepArrowCollapsible = get(g:, 'CodeflowStepArrowCollapsible', '▾')
@@ -39,6 +35,7 @@ endif
 " Load class files {{{2
 call codeflow#loadClassFiles()
 " }}}
+
 "}}}
 
 " User Command Setup {{{1
@@ -46,21 +43,21 @@ call codeflow#ui_glue#setupCommands()
 " }}}
 
 " Auto commands {{{1
-" TODO(Mitchell): determine if there are any autocommands that we need
+augroup Codeflow
+    autocmd!
+    "Save the cursor position whenever we close the flow window
+    execute "autocmd BufLeave,WinLeave " . g:CodeflowWindow.nextBufferPrefix() ."* if g:CodeflowWindow.isOpen() | call b:flowWindow.ui.saveScreenState() | endif"
+
+    "disallow insert mode in the flow window
+    execute "autocmd BufEnter,WinEnter " . g:CodeflowWindow.nextBufferPrefix() . "* stopinsert"
+augroup END
 " }}}
 
 " API {{{1
-" TODO(Mitchell): put all the public commands here
 " }}}
 
 " Post Source {{{1
 call codeflow#postSourceActions()
-" }}}
-
-" function! InputTest() abort " {{{1
-function! InputTest() abort
-    let text = input("prompt\n", "prefill", "customlist,CompleteThis")
-endfunction
 " }}}
 
 " function! TestCodeflow() abort " {{{1

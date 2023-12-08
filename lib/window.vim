@@ -1,16 +1,29 @@
 let s:Window = {}
 let g:CodeflowWindow = s:Window
 
-" function! s:Window.New() {{{1
-function! s:Window.New() abort
-    let newWindow = copy(self)
-    return newWindow
+" fun s:Window.cleanUpFlowWindow() {{{1
+function! s:Window.cleanUpFlowWindow() abort
+    if !exists(t:flowWindowBufferName)
+        return
+    endif
+
+    let bufferNumber = bufnr(t:flowWwindowBufferName)
+    "if &hidden is not set then it will already be gone
+    " we have a buffer with this name
+    if bufferNumber != -1
+        "codeflow window buf may be mirrored/displayed elsewhere
+        if self.isBufferHidden(bufferNumber)
+            exec 'bwipeout ' . bufferNumber
+        endif
+    endif
+
+    unlet t:flowWindowBufferName
 endfunction
 " }}}
 
-"function! s:Window.createWindow() {{{1
+" fun s:Window.createWindow() {{{1
 function! s:Window.createWindow() abort
-    if !s:Window.ExistsForTab()
+    if !s:Window.existsForTab()
         let t:flowWindowBufferName = self.nextBufferName()
         silent! execute 'topleft  vertical 20 new'
         silent! execute 'edit ' . t:flowWindowBufferName
@@ -26,7 +39,14 @@ function! s:Window.createWindow() abort
 endfunction
 " }}}
 
-" function! s:Window.isBufferHidden(bufferNumber) {{{1
+" fun s:Window.new() {{{1
+function! s:Window.new() abort
+    let newWindow = copy(self)
+    return newWindow
+endfunction
+" }}}
+
+" fun s:Window.isBufferHidden(bufferNumber) {{{1
 function! s:Window.isBufferHidden(bufferNumber) abort
     redir => buffers
     silent ls!
@@ -37,59 +57,37 @@ endfunction
 
 " }}}
 
-" function! s:Window.cleanUpFlowWindow() {{{1
-function! s:Window.cleanUpFlowWindow() abort
-    if !exists(t:flowWindowBufferName)
-        return
-    endif
-
-    let bufferNumber = bufnr(t:flowWwindowBufferName)
-    "if &hidden is not set then it will already be gone
-    " we have a buffer with this name
-    if bufferNumber != -1
-
-        "codeflow window buf may be mirrored/displayed elsewhere
-        if self.isBufferHidden(bufferNumber)
-            exec 'bwipeout ' . bufferNumber
-        endif
-    endif
-
-    unlet t:flowWindowBufferName
-endfunction
-
-" }}}
-
-" function! s:Window.bufferPrefix() {{{1
-function! s:Window.bufferPrefix() abort
+" fun s:Window.nextBufferPrefix() {{{1
+function! s:Window.nextBufferPrefix() abort
     return 'flow_window_'
 endfunction
 " }}}
 
-" function! s:Window.nextBufferNumber() {{{1
-function! s:Window.getNextBufferNumber() abort
-    if !exists('s:Window.nextBufferNumber')
-        let s:Window.nextBufferNumber = 1
+" fun s:Window.bufferNumber() {{{1
+function! s:Window.nextBufferNumber() abort
+    if !exists('s:Window.bufferNumber')
+        let s:Window.bufferNumber = 1
     else 
-        let s:Window.nextBufferNumber += 1
+        let s:Window.bufferNumber += 1
     endif
 
-    return s:Window.nextBufferNumber
+    return s:Window.bufferNumber
 endfunction
 " }}}
 
-" function! s:Window.nextBufferName() {{{1
+" fun s:Window.nextBufferName() {{{1
 function! s:Window.nextBufferName() abort
-    return self.bufferPrefix() . self.getNextBufferNumber()
+    return self.nextBufferPrefix() . self.nextBufferNumber()
 endfunction
 " }}}
 
-" function! s:Window.setCodeflowWindowStatusLine() {{{1
+" fun s:Window.setCodeflowWindowStatusLine() {{{1
 function! s:Window.setCodeflowWindowStatusLine() abort
     let &l:statusline = getcwd()
 endfunction
 " }}}
 
-" function! s:Window.setCodeflowWindowOptions() {{{1
+" fun s:Window.setCodeflowWindowOptions() {{{1
 function! s:Window.setCodeflowWindowOptions() abort
     " control buffer options
     setlocal bufhidden=hide
@@ -104,7 +102,7 @@ function! s:Window.setCodeflowWindowOptions() abort
 endfunction
 " }}}
 
-" function! s:Window.getFlows() {{{1
+" fun s:Window.getFlows() {{{1
 function! s:Window.getFlows() abort
     let globExpression = ".flow" . codeflow#slash() . "*.flow"
     let flows = glob(globExpression, 0, 1)
@@ -117,45 +115,43 @@ function! s:Window.getFlows() abort
 endfunction
 " }}}
 
-" function! s:Window.cursorToFlowWindow() {{{1
+" fun s:Window.cursorToFlowWindow() {{{1
 function! s:Window.cursorToFlowWindow()
-    if !s:Window.IsOpen()
+    if !s:Window.isOpen()
         throw "Codeflow Window not open"
     endif
-    execute s:Window.GetWinNumber() . "wincmd w"
+    execute s:Window.getWinNumber() . "wincmd w"
 endfunction
 " }}}
 
-" function! s:Window.Focus {{{1
-function! s:Window.Focus()
-    if s:Window.IsOpen()
+" fun s:Window.focus {{{1
+function! s:Window.focus()
+    if s:Window.isOpen()
         call s:Window.cursorToFlowWindow()
     else
-        call s:Window.CreateCodeflowWindow()
+        call s:Window.createCodeflowWindow()
     endif
 endfunction
 " }}} 
 
-" function s:Window.Render() {{{1
-function! s:Window.Render() abort
-    if s:Window.IsOpen()
+" fun s:Window.rerender() {{{1
+function! s:Window.rerender() abort
+    if s:Window.isOpen()
         call s:Window.cursorToFlowWindow()
-        let flowWindow = getbufvar(bufnr(t:flowWindowBufferName), "flowWindow")
-        " focus it
-        call flowWindow.render()
-        " go back to the 
+        let b:flowWindow.flows = g:CodeflowWindow.getFlows()
+        call b:flowWindow.render()
         execute "wincmd p"
     endif
 endfunction
 " }}}
 
-" function s:Window.render() {{{1
+" fun s:Window.render() {{{1
 function! s:Window.render() abort
     call self.ui.render()
 endfunction
 " }}}
 
-" function! s:Window.getPathHeader() {{{1
+" fun s:Window.getPathHeader() {{{1
 function! s:Window.getPathHeader() abort
     let pathHeader = getcwd()
     let limit = winwidth(0) - 1
@@ -173,7 +169,7 @@ function! s:Window.getPathHeader() abort
 endfunction
 " }}}
 
-" function s:Window.renderToString() {{{1
+" fun s:Window.renderToString() {{{1
 function! s:Window.renderToString() abort
     let returnString = ""
     if !exists("t:currentCodeFlow")
@@ -200,18 +196,18 @@ function! s:Window.renderToString() abort
 endfunction
 "}}}
 
-" function s:Window.createWindowData() {{{1
+" fun s:Window.createWindowData() {{{1
 function! s:Window.createWindowData() abort
     let newWindowData = copy(self)
-    let newWindowData.ui = g:CodeflowUI.New(newWindowData)
+    let newWindowData.ui = g:CodeflowUI.new(newWindowData)
     let newWindowData.flowFolder = getcwd() . codeflow#slash() . ".flow"
     let newWindowData.flows = s:Window.getFlows()
     return newWindowData
 endfunction
 " }}}
 
-" function s:Window.ExistsForTab() {{{1
-function! s:Window.ExistsForTab() abort
+" fun s:Window.existsForTab() {{{1
+function! s:Window.existsForTab() abort
     if !exists("t:flowWindowBufferName")
         return
     endif
@@ -220,8 +216,8 @@ function! s:Window.ExistsForTab() abort
 endfunction
 " }}}
 
-" function s:Window.GetWinNumber() {{{1
-function! s:Window.GetWinNumber() abort
+" fun s:Window.getWinNumber() {{{1
+function! s:Window.getWinNumber() abort
     if exists('t:flowWindowBufferName')
         return bufwinnr(t:flowWindowBufferName)
     endif
@@ -229,14 +225,14 @@ function! s:Window.GetWinNumber() abort
 endfunction
 " }}} 
 
-" function! s:Window.Close() {{{1
-function! s:Window.Close() abort
-    if !s:Window.IsOpen()
+" fun s:Window.close() {{{1
+function! s:Window.close() abort
+    if !s:Window.isOpen()
         return
     endif
 
     if winnr('$') !=# 1
-        if winnr() ==# s:Window.GetWinNumber()
+        if winnr() ==# s:Window.getWinNumber()
             execute "wincmd p"
             let l:activeBuffer =  bufnr('')
             execute "wincmd p"
@@ -244,7 +240,7 @@ function! s:Window.Close() abort
             let l:activeBuffer =  bufnr('')
         endif
 
-        execute s:Window.GetWinNumber() . ' wincmd w'
+        execute s:Window.getWinNumber() . ' wincmd w'
         close
         execute bufwinnr(l:activeBuffer) . ' wincmd w'
     else
@@ -253,16 +249,16 @@ function! s:Window.Close() abort
 endfunction
 " }}}
 
-" function s:Window.IsOpen() {{{1
-function! s:Window.IsOpen() abort
-    return s:Window.GetWinNumber() != -1
+" fun s:Window.isOpen() {{{1
+function! s:Window.isOpen() abort
+    return s:Window.getWinNumber() != -1
 endfunction
 " }}}
 
-" function! s:Window.GetSelected() {{{1
+" fun s:Window.getSelected() {{{1
 " returns node object for selected step or flow
 " returns empty object if there is no node to be selected
-function! s:Window.GetSelected() abort
+function! s:Window.getSelected() abort
     let newObject = {}
     let lineNumber = line('.')
 
@@ -289,28 +285,40 @@ function! s:Window.GetSelected() abort
 endfunction
 " }}}
 
-" function! s:Window.CloseCodeflowWindow() abort {{{1
-function! s:Window.CloseCodeflowWindow() abort
-    if s:Window.ExistsForTab()
-        call s:Window.Close()
-        call s:Window.cleanUpFlowWindow()
-    endif
-endfunction
-" }}}
-
-" function! s:Window.CreateCodeflowWindow() {{{1
-function! s:Window.CreateCodeflowWindow() abort
+" fun s:Window.createCodeflowWindow() {{{1
+function! s:Window.createCodeflowWindow() abort
     if !codeflow#checkFlowFolder()
         return
     endif
 
-    if s:Window.ExistsForTab()
-        call s:Window.Close()
+    if s:Window.existsForTab()
+        call s:Window.close()
         call s:Window.cleanUpFlowWindow()
     endif
 
     call s:Window.createWindow()
     let b:flowWindow = s:Window.createWindowData()
     call b:flowWindow.render()
+endfunction
+" }}}
+
+" fun s:Window.toggle() {{{1
+function! s:Window.toggle() abort
+    " we exists for the the tab
+    if s:Window.existsForTab()
+        " we are not open 
+        if !s:Window.isOpen()
+            call s:Window.createWindow()
+            " we are not hidden
+            if !&hidden
+                call b:flowWindow.render()
+            endif
+            call b:flowWindow.ui.restoreScreenState()
+        else
+            call s:Window.close()
+        endif
+    else
+        call s:Window.createCodeflowWindow()
+    endif
 endfunction
 " }}}

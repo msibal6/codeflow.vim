@@ -30,7 +30,7 @@ function! codeflow#checkFlowFolder() abort
                 \ . flowFolder . "?\nPlease enter y/Y if so: ")
         if tolower(userResponse) ==? "y"
             call system ("mkdir "  . shellescape(".flow"))
-            return 1
+            return 2
         else
             return 0
         endif
@@ -38,8 +38,8 @@ function! codeflow#checkFlowFolder() abort
     return 1
 endfunction
 " }}}
+
 function! codeflow#loadClassFiles() abort " {{{1
-    runtime lib/codeflow.vim
     runtime lib/window.vim
     runtime lib/flow.vim
     runtime lib/ui.vim
@@ -79,7 +79,7 @@ function! codeflow#execute(...) abort " {{{1
             else
                 call validCommand.internalFunction()
             endif
-            call g:CodeflowWindow.Render()
+            call g:CodeflowWindow.rerender()
         catch /\vE684/
             echoerr "Invalid action: " . action
         endtry

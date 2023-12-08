@@ -1,11 +1,11 @@
-"CLASS: KeyMap
+" CLASS: KeyMap
 "============================================================
 let s:KeyMap = {}
 let g:CodeflowKeyMap = s:KeyMap
 let s:keyMaps = {}
 
-"FUNCTION: KeyMap.FindFor(key, scope) {{{1
-function! s:KeyMap.FindFor(key, scope) abort
+"FUNCTION: KeyMap.findFor(key, scope) {{{1
+function! s:KeyMap.findFor(key, scope) abort
     return get(s:keyMaps, a:key . a:scope, {})
 endfunction
 "}}}
@@ -43,8 +43,8 @@ endfunction
 
 "}}}
 
-"FUNCTION: KeyMap.Remove(key, scope) {{{1
-function! s:KeyMap.Remove(key, scope) abort
+"FUNCTION: KeyMap.remove(key, scope) {{{1
+function! s:KeyMap.remove(key, scope) abort
     return remove(s:keyMaps, a:key . a:scope)
 endfunction
 
@@ -63,7 +63,6 @@ endfunction
 
 "}}}
 
-" TODO(Mitchell): update the comment
 "FUNCTION: KeyMap.Invoke() {{{1
 "Find a keymapping for a:key and the current scope invoke it.
 "
@@ -74,34 +73,31 @@ endfunction
 "
 "If a keymap has the scope of 'all' then it will be called if no other keymap
 "is found for a:key and the scope.
-" TODO(Mitchell):
 function! s:KeyMap.Invoke(key) abort
     "required because clicking the command window below another window still
     "invokes the <LeftRelease> mapping - but changes the window cursor
     "is in first
     "
-    " TODO(Mitchell): determine what vim bug this is
-    " do you need to do this check
     "TODO: remove this check when the vim bug is fixed
     if !exists('b:flowWindow')
         return {}
     endif
 
-    let node = g:CodeflowWindow.GetSelected()
+    let node = g:CodeflowWindow.getSelected()
 
     if empty(node)
         return
     endif
 
     if has_key(node, "isFlow")
-        let km = s:KeyMap.FindFor(a:key, 'flow')
+        let km = s:KeyMap.findFor(a:key, 'flow')
         if !empty(km)
             return km.invoke(node)
         endif
     endif
 
     if has_key(node, "isStep")
-        let km = s:KeyMap.FindFor(a:key, 'step')
+        let km = s:KeyMap.findFor(a:key, 'step')
         if !empty(km)
             return km.invoke(node)
         endif
@@ -109,12 +105,12 @@ function! s:KeyMap.Invoke(key) abort
 endfunction
 " }}}
 
-"FUNCTION: KeyMap.Create(options) {{{1
-function! s:KeyMap.Create(options) abort
+"FUNCTION: KeyMap.create(options) {{{1
+function! s:KeyMap.create(options) abort
     let opts = extend({'scope': 'all', 'quickhelpText': ''}, copy(a:options))
 
     "dont override other mappings unless the 'override' option is given
-    if get(opts, 'override', 0) ==# 0 && !empty(s:KeyMap.FindFor(opts['key'], opts['scope']))
+    if get(opts, 'override', 0) ==# 0 && !empty(s:KeyMap.findFor(opts['key'], opts['scope']))
         return
     end
 
@@ -124,15 +120,7 @@ function! s:KeyMap.Create(options) abort
     let newKeyMap.callback = opts['callback']
     let newKeyMap.scope = opts['scope']
 
-    call s:KeyMap.Add(newKeyMap)
+    let s:keyMaps[newKeyMap.key . newKeyMap.scope] = newKeyMap
 endfunction
-
 "}}}
 
-" function! s:KeyMap.Add(keymap) abort " {{{1
-function! s:KeyMap.Add(keymap) abort
-    let s:keyMaps[a:keymap.key . a:keymap.scope] = a:keymap
-endfunction
-" }}}
-
-" vim: set sw=4 sts=4 et fdm=marker:

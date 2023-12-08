@@ -22,12 +22,12 @@ let s:commandList =
                     \ },
                 \ {
                     \ 'action'   : 'openWindow',
-                    \ 'internalFunction' : funcref("g:CodeflowWindow.CreateCodeflowWindow"),
+                    \ 'internalFunction' : funcref("g:CodeflowWindow.createCodeflowWindow"),
                     \ 'argsNeeded' : 0,
                     \ },
                 \ {
                     \ 'action'   : 'closeWindow',
-                    \ 'internalFunction' : funcref("g:CodeflowWindow.CloseCodeflowWindow"),
+                    \ 'internalFunction' : funcref("g:CodeflowWindow.close"),
                     \ 'argsNeeded' : 0,
                     \ },
                 \ {
@@ -71,7 +71,6 @@ let g:CodeflowCommandList = s:commandList
 " function! s:commandComplete(lead, line, position) " {{{1
 function! s:codeflowComplete(lead, line, position) abort
     let args = split(a:line)
-    echom len(args)
     " return all valid commands
     if len(args) == 1
         return mapnew(s:commandList, {_,val -> val.action})
@@ -99,29 +98,22 @@ function! s:SID() abort
 endfun
 " }}}
 
-
-" TODO(Mitchell): do we want this to be in autoload
 function! codeflow#ui_glue#createDefaultBindings() abort " {{{1
     let script_num = '<SNR>' . s:SID() . '_'
-    call g:CodeflowKeyMap.Create({'key': g:CodeflowCustomOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
-    call g:CodeflowKeyMap.Create({'key': g:CodeflowCustomOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
-    call g:CodeflowKeyMap.Create({'key': g:CodeflowOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
-    call g:CodeflowKeyMap.Create({'key': g:CodeflowOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
-    call g:CodeflowKeyMap.Create({'key': g:CodeflowDelete, 'scope': 'flow', 'callback': script_num . 'deleteFlowNode'})
-    call g:CodeflowKeyMap.Create({'key': g:CodeflowDelete, 'scope': 'step', 'callback': script_num . 'deleteStepNode'})
-    call g:CodeflowKeyMap.Create({'key': '<2-LeftMouse>', 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
-    call g:CodeflowKeyMap.Create({'key': '<2-LeftMouse>', 'scope': 'step', 'callback': script_num . 'activateStepNode'})
+    call g:CodeflowKeyMap.create({'key': g:CodeflowCustomOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
+    call g:CodeflowKeyMap.create({'key': g:CodeflowCustomOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
+    call g:CodeflowKeyMap.create({'key': g:CodeflowOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
+    call g:CodeflowKeyMap.create({'key': g:CodeflowOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
+    call g:CodeflowKeyMap.create({'key': g:CodeflowDelete, 'scope': 'flow', 'callback': script_num . 'deleteFlowNode'})
+    call g:CodeflowKeyMap.create({'key': g:CodeflowDelete, 'scope': 'step', 'callback': script_num . 'deleteStepNode'})
+    call g:CodeflowKeyMap.create({'key': '<2-LeftMouse>', 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
+    call g:CodeflowKeyMap.create({'key': '<2-LeftMouse>', 'scope': 'step', 'callback': script_num . 'activateStepNode'})
 endfunction
 " }}}
 
-" TODO(Mitchell): determine if this is necessary after implementing all key
-" and mouse presses
-" Why do you call it all the way from ui_glue
 function! codeflow#ui_glue#invokeKeyMap(key) abort " {{{1
     call g:CodeflowKeyMap.Invoke(a:key)
-    " TODO(Mitchell): does this render call need to happen every time
-    " include check for active codeflow wind
-    call g:CodeflowWindow.Render()
+    call g:CodeflowWindow.rerender()
 endfunction
 " }}}
 
@@ -135,7 +127,6 @@ function! s:activateStepNode(node) abort " {{{1
     " XXX render speed for the selected steps being highlighted is slow?
     " but is satisfactory for now
     let t:currentCodeFlow.currentStep = a:node.stepIndex
-    call b:flowWindow.render()
     execute "wincmd p"
     call g:CodeflowFlow.goToStep(a:node.stepIndex)
 endfunction

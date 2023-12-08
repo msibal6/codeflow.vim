@@ -21,24 +21,40 @@ function! s:Flow.updateStatusLine() abort
 endfunction
 " }}}
 
+" function! s:Flow.isValidName(desiredName) {{{1
+function! s:Flow.isValidName(desiredName) abort
+    for char in a:desiredName
+        if char !~# "[0-9A-Za-z _]"
+            return 0
+        endif
+    endfor
+    return 1
+endfunction
+" }}}
+
 " function! s:Flow.startFlow() {{{1
 function! s:Flow.startFlow() abort
-    if !codeflow#checkFlowFolder()
+    let folderStatus = codeflow#checkFlowFolder()
+    if folderStatus ==# 0
         return
     endif
 
-
+    if s:Flow.isFlowActive()
+        call s:Flow.closeFlow()
+    endif
+        
     " create new code flow
+    let prompt = folderStatus ==# 1 ? "" : "\n"
+    let prompt .= "Please give flow name\n"
+    let desiredName = input(prompt)
+    if !s:Flow.isValidName(desiredName)
+        echo "\nPlease enter valid flow name with alphanumeric, ' ', and '_'
+                    \ characters" 
+        return
+    endif
     let t:currentCodeFlow = {}
-    " TODO(Mitchell) : check for invalid file names
-    " TODO(Mitchell): determine do we need to write this write away
-    let t:currentCodeFlow.name = input("\nPlease give flow name\n")
+    let t:currentCodeFlow.name = desiredName
     let t:currentCodeFlow.file = ".flow". codeflow#slash() . t:currentCodeFlow.name . ".flow"
-
-    " TODO(Mitchell): find duplicates of new state
-    " this means that we are opening a new flow while one is already open
-    " we will be saving the one in progress if desired
-    " empty list for steps
     let t:currentCodeFlow.steps = []
     let t:currentCodeFlow.currentStep = 0
     let t:currentCodeFlow.numberSteps = 0
@@ -47,10 +63,16 @@ function! s:Flow.startFlow() abort
 endfunction
 " }}}
 
+" function! s:isFlowActive() {{{1
+function! s:Flow.isFlowActive() abort
+    return exists("t:currentCodeFlow")
+endfunction
+" }}}
+
 " function! s:Flow.checkActiveFlow() {{{1
 function! s:Flow.checkActiveFlow() abort
     try
-        if !exists("t:currentCodeFlow")
+        if !s:Flow.isFlowActive()
             throw "No Active Flow"
         endif
     catch /\v^No/
@@ -66,10 +88,8 @@ function! s:Flow.insertStep() abort
     " create new step
     let newStep = {}
 
-    " TODO(Mitchell): change this to be relative path from repo root
     let newStep.file = expand("%")
     let newStep.lineNumber = line(".")
-    " TODO(Mitchell): filter out any nonwhitespace character
     let newStep.description = input("Please describe this step\n")
 
     " add new step to the current flow
@@ -196,6 +216,8 @@ function! s:Flow.saveFlow() abort
     execute "pedit " . t:currentCodeFlow.file
     execute "wincmd k"
     normal! ggVGx
+    setlocal bufhidden=hide
+    setlocal nobuflisted
     " write file, line number and description for each step
     for step in t:currentCodeFlow.steps
         execute "normal! i" . step.file . "\n"
@@ -210,6 +232,10 @@ endfunction
 
 " function! s:Flow._openFlow(name) {{{1
 function! s:Flow._openFlow(name) abort
+    if s:Flow.isFlowActive()
+        call s:Flow.closeFlow()
+    endif
+
     let file = ".flow" . codeflow#slash() . a:name . ".flow"
     if getftype(file) !=# "file"
         echoerr "No flow with name " . a:name
@@ -218,8 +244,8 @@ function! s:Flow._openFlow(name) abort
 
     let t:currentCodeFlow = {}
     let t:currentCodeFlow.name = a:name
-    let t:currentCodeFlow.file = 
-                \ ".flow" . codeflow#slash() 
+    let t:currentCodeFlow.file =
+                \ ".flow" . codeflow#slash()
                 \ . t:currentCodeFlow.name . ".flow"
     let t:currentCodeFlow.steps = []
     let t:currentCodeFlow.currentStep = 0
@@ -228,18 +254,19 @@ function! s:Flow._openFlow(name) abort
     " Read flow file
     execute "pedit " . t:currentCodeFlow.file
     execute "wincmd k"
+    setlocal bufhidden=hide
+    setlocal nobuflisted
+
     let numberLines = line("$")
     let currentLine = 1
-    " this is an empty flow file
-    " and we do not need to load from this file
     if currentLine == numberLines
         silent execute "wq"
         call s:Flow.savePrevStatusLine()
         call s:Flow.updateStatusLine()
         return
     endif
-    let newStep = {}
 
+    let newStep = {}
     while currentLine <= numberLines
         let currentLineText = getline(currentLine)
         if currentLine % 3 == 1
@@ -248,8 +275,7 @@ function! s:Flow._openFlow(name) abort
             let newStep.lineNumber = currentLineText
         elseif currentLine % 3 == 0
             let newStep.description = currentLineText
-            " TODO(Mitchell): replace deepcopy with copy as test
-            call add(t:currentCodeFlow.steps, deepcopy(newStep))
+            call add(t:currentCodeFlow.steps, copy(newStep))
         endif
         let currentLine += 1
     endwhile
@@ -265,7 +291,8 @@ endfunction
 " }}}
 
 " function! OpenFlowCompletion() {{{1
-function! OpenFlowCompletion(lead, line, positihn) abort
+" This is global to be in scope for input()
+function! OpenFlowCompletion(lead, line, position) abort
     " if user has entered text, complete what they have written
     let flows = glob(".flow" . codeflow#slash() . "*.flow", 0, 1)
     call map(flows, {_, val -> fnamemodify(val, ":t:r")})
@@ -290,11 +317,6 @@ function! s:Flow.openFlow() abort
         return
     endif
 
-    " TODO(Mitchell): check if we already have another flow going
-    " TODO(Mitchell): add all the checking
-    " it is much faster to implement when you know all the input that can be
-    " given for a certain function
-    " the real world is much harder
     call s:Flow._openFlow(chosenFlow)
 endfunction
 " }}}
@@ -303,7 +325,6 @@ endfunction
 function! s:Flow.closeFlow() abort
     call s:Flow.checkActiveFlow()
     call s:Flow.saveFlow()
-
     " free and unlet to return to inactive flow state
     unlet t:currentCodeFlow.name
     unlet t:currentCodeFlow.file
