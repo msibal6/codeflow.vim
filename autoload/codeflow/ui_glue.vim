@@ -2,7 +2,7 @@
 " function! codeflow#ui_glue#setupCommands() {{{1
 function! codeflow#ui_glue#setupCommands() abort
     echom '%#-%'
-    command! -n=? -complete=dir -bar CodeflowNew call codeflow#execute(<f-args>)
+    command! -nargs=* -bar -bang -complete=augroup Codeflow call codeflow#execute(<f-args>)
 endfunction
 " }}}
 

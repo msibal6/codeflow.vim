@@ -70,3 +70,15 @@ endfunction
 call codeflow#postSourceActions()
 " }}}
 
+function! TestCodeflow() abort
+    execute "Codeflow start-flow"
+    execute ":10"
+    execute "Codeflow add-step"
+    execute ":20"
+    execute "Codeflow add-step"
+    execute ":30"
+    execute "Codeflow add-step"
+    execute "Codeflow go-to-step 1"
+    execute ":45"
+    execute "Codeflow update-step"
+endfunction
