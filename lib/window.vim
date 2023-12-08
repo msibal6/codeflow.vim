@@ -12,7 +12,7 @@ endfunction
 "function! s:Window.createWindow() {{{1
 function! s:Window.createWindow() abort
 
-    if !g:Codeflow.ExistsForTab()
+    if !s:Window.ExistsForTab()
         let t:flowWindowBufferName = self.nextBufferName()
         silent! execute 'topleft  vertical 20 new'
         silent! execute 'edit ' . t:flowWindowBufferName
@@ -23,6 +23,8 @@ function! s:Window.createWindow() abort
 
     setlocal winfixwidth
 
+    " TODO(Mitchell): active the bindings here
+    call g:CodeflowKeyMap.BindAll()
     call self.setCodeflowWindowOptions()
 endfunction
 " }}}
@@ -107,7 +109,6 @@ function! s:Window.setCodeflowWindowOptions() abort
 endfunction
 " }}}
 
-" TODO(Mitchell):
 " function! s:Window.getFlows() {{{1
 function! s:Window.getFlows() abort
     let globExpression = '.flow/*.flow'
@@ -121,27 +122,13 @@ function! s:Window.getFlows() abort
 endfunction
 " }}}
 
-" TODO(Mitchell):
-" function! s:_flows_to_string(flows) {{{1
-function! s:_flows_to_string(flows) abort
-    let flows_string = ""
-    echo "flows to string"
-    echo a:flows
-    
-    for flow in a:flows
-        let flows_string .= flow . "\n"
-    endfor
-    return flows_string
-endfunction
-" }}}
-
-" TODO(Mitchell): 
 " function s:Window.render() {{{1
 function! s:Window.render() abort
     call self.ui.render()
 endfunction
 " }}}
 
+" TODO(Mitchell): check flow state
 " function s:Window.renderToString() {{{1
 function! s:Window.renderToString() abort
     let returnString = ""
@@ -151,11 +138,11 @@ function! s:Window.renderToString() abort
     return returnString
 endfunction
 "}}} 
+
 " function s:Window.createWindowData() {{{1
 function! s:Window.createWindowData() abort
     let newWindowData = copy(self)
     let newWindowData.ui = g:CodeflowUI.New(newWindowData)
-    " TODO(Mitchell): is flowFolder needed
     let newWindowData.flowFolder = getcwd() . codeflow#slash() . ".flow"
     let newWindowData.flows = s:Window.getFlows()
     echo newWindowData
@@ -212,6 +199,31 @@ function! s:Window.IsOpen() abort
 endfunction
 " }}}
 
+" TODO(Mitchell):
+" function! s:Window.GetSelected() {{{1
+function! s:Window.GetSelected() abort
+    let newObject = {}
+    echom "window get selected"
+    if !exists('t:currentCodeFlow')
+        echom "window get selected no current code flow"
+        " get the file
+        let flowFile = ".flow" . codeflow#slash() . getline('.') . ".flow"
+        if !empty(glob(flowFile))
+            let newObject.isFlow = 1
+            let newObject.flowFile = flowFile
+            let newObject.flowName = getline('.')
+        else 
+            let newObject.isFlow = 0
+        endif
+    else
+        " TODO(Mitchell): implement selecting step
+        let newObject.isStep = 0
+    endif
+    return newObject
+endfunction
+" }}}
+
+" TODO(Mitchell): check for existing flow folder
 " function! s:Window.CreateCodeflowWindow() {{{1
 function! s:Window.CreateCodeflowWindow() abort
     " TODO(Mitchell): after basic flow window implementation

@@ -32,6 +32,7 @@ function! codeflow#loadClassFiles() abort
     runtime lib/window.vim
     runtime lib/flow.vim
     runtime lib/ui.vim
+    runtime lib/keymap.vim
     " TODO(Mitchell): put all the class files here
     " if we are going to be doing OOP we might not need it now
     " TODO(Mitchell):
@@ -47,19 +48,7 @@ function! codeflow#postSourceActions() abort
 endfunction
 " }}}
 
-" TODO(Mitchell): delete this if not needed
-" function! CodeflowAddKeyMap(options) {{{1
-function! CodeflowAddKeyMap(options) abort
-    call g:CodeflowKeyMap.Create(a:options)
-endfunction
-" }}}
 
-" TODO(Mitchell): thsi is a codeflow window function
-" function! codeflow#render() {{{1
-function! codeflow#render() abort
-    echom 'autoload codeflow render'
-endfunction
-" }}}
 
 " function! codeflow#execute() {{{1
 function! codeflow#execute(...) abort

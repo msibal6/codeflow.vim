@@ -182,23 +182,11 @@ function! s:Flow.saveFlow() abort
 endfunction
 " }}}
 
-" function! s:Flow.openFlow() {{{1
-function! s:Flow.openFlow() abort
-    let chosenFlow = input("Please give flow name\n")
-
-    if !len(chosenFlow)
-        echoerr "no flow given"
-        return
-    endif
-    " TODO(Mitchell): check if we already have another flow going
-    " TODO(Mitchell): add all the checking
-    " it is much faster to implement when you know all the input that can be
-    " given for a certain function
-    " the real world is much harder
-
+" function! s:Flow._openFlow(flowName) {{{1
+function! s:Flow._openFlow(flowName) abort
     let t:currentCodeFlow = {}
-    let t:currentCodeFlow.flowName = chosenFlow
-    let t:currentCodeFlow.flowFile = ".flow/". t:currentCodeFlow.flowName . ".flow"
+    let t:currentCodeFlow.flowName = a:flowName
+    let t:currentCodeFlow.flowFile = ".flow" . codeflow#slash(). t:currentCodeFlow.flowName . ".flow"
     let t:currentCodeFlow.steps = []
     let t:currentCodeFlow.currenteStep = 0
     let t:currentCodeFlow.numberSteps = 0
@@ -230,6 +218,23 @@ function! s:Flow.openFlow() abort
     call s:Flow.savePrevStatusLine()
     call s:Flow.updateStatusLine()
     call s:Flow.goToStep(t:currentCodeFlow.currentStep)
+endfunction
+" }}}
+
+" function! s:Flow.openFlow() {{{1
+function! s:Flow.openFlow() abort
+    let chosenFlow = input("Please give flow name\n")
+
+    if !len(chosenFlow)
+        echoerr "no flow given"
+        return
+    endif
+    " TODO(Mitchell): check if we already have another flow going
+    " TODO(Mitchell): add all the checking
+    " it is much faster to implement when you know all the input that can be
+    " given for a certain function
+    " the real world is much harder
+    call s:Flow._openFlow(chosenFlow)
 endfunction
 " }}}
 

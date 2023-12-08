@@ -18,23 +18,38 @@ endfun
 " function! codeflow#ui_glue#createDefaultBindings() {{{1
 function! codeflow#ui_glue#createDefaultBindings() abort
     let script_num = '<SNR>' . s:SID() . '_'
-    call CodeflowAddKeyMap({'key': g:CodeflowCustomOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
-    call CodeflowAddKeyMap({'key': g:CodeflowCustomOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
-    call CodeflowAddKeyMap({'key': g:CodeflowOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
-    call CodeflowAddKeyMap({'key': g:CodeflowOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
+    echom g:CodeflowCustomOpen
+    echom g:CodeflowOpen
+    call g:CodeflowKeyMap.Create({'key': g:CodeflowCustomOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
+    call g:CodeflowKeyMap.Create({'key': g:CodeflowCustomOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
+    call g:CodeflowKeyMap.Create({'key': g:CodeflowOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
+    call g:CodeflowKeyMap.Create({'key': g:CodeflowOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
 endfunction
 " }}}
 
+" FUNCTION: nerdtree#ui_glue#invokeKeyMap(key) {{{1
+"this is needed since I cant figure out how to invoke dict functions from a
+"key map
+" TODO(Mitchell): delete this after implementing mouse to see if we no longer
+" need this
+function! codeflow#ui_glue#invokeKeyMap(key) abort
+    echom "ui glue invoke"
+    call g:CodeflowKeyMap.Invoke(a:key)
+endfunction
+" }}}
+" TODO(Mitchell):
 " function! s:activateFlowNode(node) {{{1
 function! s:activateFlowNode(node) abort
-    " TODO(Mitchell):
+    echo a:node
     echom "test activateFlowNode"
+    execute "wincmd p"
+    call g:CodeflowFlow._openFlow(a:node.flowName)
 endfunction
 "}}}
 
+" TODO(Mitchell):
 " function! s:activateStepNode(node) {{{1
 function! s:activateStepNode(node) abort
-    " TODO(Mitchell):
     echom "test activateStepNode"
 endfunction
 "}}}

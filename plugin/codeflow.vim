@@ -23,7 +23,7 @@ set cpoptions&vim
 "SECTION: Initialize variable calls and other constants {{{2
 " TODO(Mitchell): initialize the constants for mappings
 let g:CodeflowCustomOpen = get(g:, 'CodeflowCustomOpen', '<CR>')
-let g:CodeflowOpen = get(g:, 'CodeflowCustomOpen', '<CR>')
+let g:CodeflowOpen = get(g:, 'CodeflowOpen', 'o')
 " }}}
 
 
@@ -50,21 +50,6 @@ call codeflow#ui_glue#setupCommands()
 
 " API {{{1
 " TODO(Mitchell): put all the public commands here
-" }}}
-
-" function! CodeflowAddKeyMap(options) {{{1
-function! CodeflowAddKeyMap(options) abort
-    call g:CodeflowKeyMap.Create(a:options)
-endfunction
-" }}}
-
-" TODO(Mitchell): window function
-" function! CodeflowRender() {{{1
-function! CodeflowRender() abort
-    call codeflow#render()
-endfunction
-" }}}
-
 " }}}
 
 " Post Source {{{1
