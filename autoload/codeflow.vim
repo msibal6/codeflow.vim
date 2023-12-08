@@ -53,27 +53,25 @@ endfunction
 " }}}
 
 function! codeflow#execute(...) abort " {{{1
-    try 
+    try
         let action = a:1
-        try 
+        try
             let validCommand = filter(copy(g:CodeflowCommandList),
                         \ {_, val -> val.action ==# action})[0]
             call s:checkArgCount(a:0 - 1, validCommand.argsNeeded)
             if len(a:000) == 2
                 call validCommand.internalFunction(a:2)
-            else 
+            else
                 call validCommand.internalFunction()
             endif
-        " thrown when validCommand assignment accesses out of range index
-        " because action does not match any valid actions
+            call g:CodeflowWindow.Render()
         catch /\vE684/
-            " throw "Invalid action"
             echoerr "Invalid action: " . action
         endtry
     catch /\vNo active flow/
-        echoerr "No active flow" 
-    catch /\v^E121/
-        echoerr "No action" 
+        echoerr "No active flow"
+    catch /E121/
+        echoerr "No action" . v:throwpoint
     catch /\v^Too/
         echoerr "Too many arguments for " . action
     catch /\v^Not enough/

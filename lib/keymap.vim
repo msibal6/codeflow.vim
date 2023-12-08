@@ -12,7 +12,7 @@ endfunction
 
 "FUNCTION: KeyMap.BindAll() {{{1
 function! s:KeyMap.BindAll() abort
-    for keyMap values(s:keyMaps)
+    for keyMap in values(s:keyMaps)
         call keyMap.bind()
     endfor
 endfunction
@@ -38,7 +38,7 @@ function! s:KeyMap.bind() abort
     let premap = self.key ==# '<LeftRelease>' ? ' <LeftRelease>' : ' '
 
     " MITCHNOTE: each keymap creates its own mapping in the buffer
-    exec 'nnoremap <buffer> <silent> '. self.key . premap . ':call g:CodeflowKeyMap.Invoke("'. keymapInvokeString .'")<cr>'
+    exec 'nnoremap <buffer> <silent> '. self.key . premap . ':call codeflow#ui_glue#invokeKeyMap("'. keymapInvokeString .'")<cr>'
 endfunction
 
 "}}}
@@ -93,13 +93,18 @@ function! s:KeyMap.Invoke(key) abort
         return
     endif
 
-    if node.isFlow
-        "try file node
+    if has_key(node, "isFlow")
         let km = s:KeyMap.FindFor(a:key, 'flow')
         if !empty(km)
             return km.invoke(node)
         endif
-    elseif node.isStep
+    endif
+
+    if has_key(node, "isStep")
+        let km = s:KeyMap.FindFor(a:key, 'step')
+        if !empty(km)
+            return km.invoke(node)
+        endif
     endif
 endfunction
 " }}}

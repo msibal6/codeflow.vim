@@ -22,9 +22,9 @@ let s:old_cpo = &cpoptions
 set cpoptions&vim
 
 "SECTION: Initialize variable calls and other constants {{{2
-" TODO(Mitchell): initialize the constants for mappings
 let g:CodeflowCustomOpen = get(g:, 'CodeflowCustomOpen', '<CR>')
 let g:CodeflowOpen = get(g:, 'CodeflowOpen', 'o')
+let g:CodeflowDelete = get(g:, 'CodeflowDelete', 'd')
 " }}}
 
 
@@ -54,8 +54,6 @@ call codeflow#ui_glue#setupCommands()
 " }}}
 
 " Post Source {{{1
-" TODO(Mitchell): implement the binding for the keys for the flows and steps
-" in the flow window
 call codeflow#postSourceActions()
 " }}}
 
@@ -70,11 +68,11 @@ function! TestCodeflow() abort
     execute "set number"
     execute "Codeflow start"
     execute ":10"
-    execute "Codeflow appendStep"
+    execute "Codeflow addStep"
     execute ":20"
-    execute "Codeflow appendStep"
+    execute "Codeflow addStep"
     execute ":30"
-    execute "Codeflow appendStep"
+    execute "Codeflow addStep"
     execute "Codeflow goToStep 1"
     execute ":45"
     execute "Codeflow updateStep 0"

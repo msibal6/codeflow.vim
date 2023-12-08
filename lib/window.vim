@@ -9,6 +9,7 @@ endfunction
 " }}}
 
 " TODO(Mitchell): customizable window height
+" and direction
 "function! s:Window.createWindow() {{{1
 function! s:Window.createWindow() abort
     if !s:Window.ExistsForTab()
@@ -84,10 +85,9 @@ function! s:Window.nextBufferName() abort
 endfunction
 " }}}
 
-" TODO(Mitchell): change based on active flow 
 " function! s:Window.setCodeflowWindowStatusLine() {{{1
 function! s:Window.setCodeflowWindowStatusLine() abort
-    let &l:statusline = "Flows for " . getcwd()
+    let &l:statusline = getcwd()
 endfunction
 " }}}
 
@@ -98,7 +98,11 @@ function! s:Window.setCodeflowWindowOptions() abort
     setlocal buftype=nofile
     setlocal noswapfile
     setlocal nobuflisted
-    setlocal filetype=flow
+    setlocal filetype=codeflow
+    if has('patch-7.4.1925')
+        clearjumps
+    endif
+
 
     " TODO(Mitchell): bind the mappings for the opening stuff here
     call self.setCodeflowWindowStatusLine()
@@ -107,14 +111,36 @@ endfunction
 
 " function! s:Window.getFlows() {{{1
 function! s:Window.getFlows() abort
-    let globExpression = '.flow/*.flow'
+    let globExpression = ".flow" . codeflow#slash() . "*.flow"
     let flows = glob(globExpression, 0, 1)
     let index = 0
     while index < len(flows)
-        let flows[index] = fnamemodify(flows[index], ':t:r')
+        let flows[index] = flows[index]->fnamemodify(":t:r")
         let index += 1
     endwhile
     return flows
+endfunction
+" }}}
+
+" function! s:Window.cursorToFlowWindow() {{{1
+function! s:Window.cursorToFlowWindow()
+    if !s:Window.IsOpen()
+        throw "Codeflow Window not open"
+    endif
+    execute s:Window.GetWinNumber() . "wincmd w"
+endfunction
+" }}}
+
+" function s:Window.Render() {{{1
+function! s:Window.Render() abort
+    if s:Window.IsOpen()
+        call s:Window.cursorToFlowWindow()
+        let flowWindow = getbufvar(bufnr(t:flowWindowBufferName), "flowWindow")
+        " focus it
+        call flowWindow.render()
+        " go back to the 
+        execute "wincmd p"
+    endif
 endfunction
 " }}}
 
@@ -124,16 +150,50 @@ function! s:Window.render() abort
 endfunction
 " }}}
 
-" TODO(Mitchell): check flow state
+" function! s:Window.getPathHeader() {{{1
+function! s:Window.getPathHeader() abort
+    let pathHeader = getcwd()
+    let limit = winwidth(0) - 1
+    if strdisplaywidth(pathHeader) > limit
+        while strdisplaywidth(pathHeader) > limit && strchars(pathHeader) > 0
+            let pathHeader = substitute(pathHeader, '^.', '', '')
+        endwhile
+        if len(split(pathHeader, '/')) > 1
+            let pathHeader = '</' . join(split(pathHeader, '/')[1:], '/') . '/'
+        else
+            let pathHeader = '<' . pathHeader
+        endif
+    endif
+    return pathHeader
+endfunction
+" }}}
+
 " function s:Window.renderToString() {{{1
 function! s:Window.renderToString() abort
     let returnString = ""
-    for flow in self.flows
-        let returnString .= flow . "\n"
-    endfor
+    if !exists("t:currentCodeFlow")
+        let returnString .= "Flows for\n"
+        let returnString .= s:Window.getPathHeader() . "\n\n"
+        for flow in self.flows
+            let returnString .= flow . "\n"
+        endfor
+    else
+        let returnString .= "Steps for\n"
+        let returnString .= t:currentCodeFlow.name . "\n\n"
+        let steps = t:currentCodeFlow.steps
+        let index = 0
+        while index < len(steps)
+            if (t:currentCodeFlow.currentStep ==# index + 1)
+                let returnString .= "+"
+            endif
+
+            let returnString .= (index + 1) . ") ". steps[index].description . "\n"
+            let index += 1
+        endwhile
+    endif
     return returnString
 endfunction
-"}}} 
+"}}}
 
 " function s:Window.createWindowData() {{{1
 function! s:Window.createWindowData() abort
@@ -194,40 +254,44 @@ function! s:Window.IsOpen() abort
 endfunction
 " }}}
 
-" TODO(Mitchell):
 " function! s:Window.GetSelected() {{{1
 " returns node object for selected step or flow
 " returns empty object if there is no node to be selected
 function! s:Window.GetSelected() abort
     let newObject = {}
+    let lineNumber = line('.')
+
+    if lineNumber < 4
+        return {}
+    endif
+
     if !exists('t:currentCodeFlow')
+
         " check for a flow node
-        " get the file
         let file = ".flow" . codeflow#slash() . getline('.') . ".flow"
+        " get the file
         if !empty(glob(file))
             let newObject.isFlow = 1
             let newObject.file = file
             let newObject.name = getline('.')
-        else 
-            let newObject.isFlow = 0
         endif
     else
-        " TODO(Mitchell): implement selecting step
-        " check for a step node
-        let newObject.isStep = 0
+        let newObject.isStep = 1
+        let newObject.stepIndex = lineNumber - 3
     endif
-    " returns empty object if there was neither
+
     return newObject
 endfunction
 " }}}
 
-" function! s:Window.CloseCodeflowWindow() abort
+" function! s:Window.CloseCodeflowWindow() abort {{{1
 function! s:Window.CloseCodeflowWindow() abort
     if s:Window.ExistsForTab()
         call s:Window.Close()
         call s:Window.cleanUpFlowWindow()
     endif
 endfunction
+" }}}
 
 " TODO(Mitchell): check for existing flow folder
 " function! s:Window.CreateCodeflowWindow() {{{1
@@ -242,7 +306,3 @@ function! s:Window.CreateCodeflowWindow() abort
     call b:flowWindow.render()
 endfunction
 " }}}
-
-
-
-

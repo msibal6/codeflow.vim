@@ -21,8 +21,18 @@ let s:commandList =
                     \ 'argsNeeded' : 0,
                     \ },
                 \ {
-                    \ 'action'   : 'appendStep',
-                    \ 'internalFunction' : funcref("g:CodeflowFlow.appendStep"),
+                    \ 'action'   : 'openWindow',
+                    \ 'internalFunction' : funcref("g:CodeflowWindow.CreateCodeflowWindow"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'closeWindow',
+                    \ 'internalFunction' : funcref("g:CodeflowWindow.CloseCodeflowWindow"),
+                    \ 'argsNeeded' : 0,
+                    \ },
+                \ {
+                    \ 'action'   : 'addStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.addStep"),
                     \ 'argsNeeded' : 0,
                     \ },
                 \ {
@@ -37,12 +47,12 @@ let s:commandList =
                     \ },
                 \ {
                     \ 'action'   : 'prevStep',
-                    \ 'internalFunction' : funcref("g:CodeflowFlow.prevOver"),
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.prevStep"),
                     \ 'argsNeeded' : 0,
                     \ },
                 \ {
                     \ 'action'   : 'nextStep',
-                    \ 'internalFunction' : funcref("g:CodeflowFlow.stepOver"),
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.nextStep"),
                     \ 'argsNeeded' : 0,
                     \ },
                 \ {
@@ -51,8 +61,8 @@ let s:commandList =
                     \ 'argsNeeded' : 1,
                     \ },
                 \ {
-                    \ 'action'   : 'removeStep',
-                    \ 'internalFunction' : funcref("g:CodeflowFlow.removeStep"),
+                    \ 'action'   : 'deleteStep',
+                    \ 'internalFunction' : funcref("g:CodeflowFlow.deleteStep"),
                     \ 'argsNeeded' : 0,
                     \ }
                 \ ]
@@ -97,6 +107,10 @@ function! codeflow#ui_glue#createDefaultBindings() abort " {{{1
     call g:CodeflowKeyMap.Create({'key': g:CodeflowCustomOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
     call g:CodeflowKeyMap.Create({'key': g:CodeflowOpen, 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
     call g:CodeflowKeyMap.Create({'key': g:CodeflowOpen, 'scope': 'step', 'callback': script_num . 'activateStepNode'})
+    call g:CodeflowKeyMap.Create({'key': g:CodeflowDelete, 'scope': 'flow', 'callback': script_num . 'deleteFlowNode'})
+    call g:CodeflowKeyMap.Create({'key': g:CodeflowDelete, 'scope': 'step', 'callback': script_num . 'deleteStepNode'})
+    call g:CodeflowKeyMap.Create({'key': '<2-LeftMouse>', 'scope': 'flow', 'callback': script_num . 'activateFlowNode'})
+    call g:CodeflowKeyMap.Create({'key': '<2-LeftMouse>', 'scope': 'step', 'callback': script_num . 'activateStepNode'})
 endfunction
 " }}}
 
@@ -105,18 +119,32 @@ endfunction
 " Why do you call it all the way from ui_glue
 function! codeflow#ui_glue#invokeKeyMap(key) abort " {{{1
     call g:CodeflowKeyMap.Invoke(a:key)
+    call g:CodeflowWindow.Render()
 endfunction
 " }}}
 
-" TODO(Mitchell):
 function! s:activateFlowNode(node) abort " {{{1
     execute "wincmd p"
     call g:CodeflowFlow._openFlow(a:node.name)
 endfunction
 "}}}
 
-" TODO(Mitchell):
 function! s:activateStepNode(node) abort " {{{1
-    echom "test activateStepNode"
+    " XXX render speed for the selected steps being highlighted is slow?
+    " but is satisfactory for now
+    let t:currentCodeFlow.currentStep = a:node.stepIndex
+    call b:flowWindow.render()
+    execute "wincmd p"
+    call g:CodeflowFlow.goToStep(a:node.stepIndex)
+endfunction
+"}}}
+
+function! s:deleteStepNode(node) abort " {{{1
+    call g:CodeflowFlow.deleteStep()
+endfunction
+" }}}
+
+function! s:deleteFlowNode(node) abort " {{{1
+    call system("rm -f " . shellescape(a:node.file))
 endfunction
 "}}}

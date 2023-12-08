@@ -23,33 +23,31 @@ endfunction
 
 " function! s:Flow.startFlow() {{{1
 function! s:Flow.startFlow() abort
-    " TODO(Mitchell): check if the .flow folder exists in the file system
-    " right now only checks if there is something called .flow
-    let flowFolder = getcwd() . "/.flow"
+    let flowFolder = getcwd() . codeflow#slash() . ".flow"
     if getftype(flowFolder) !=# "dir"
         " create .flow folder
         let userResponse = input("Do you want to create flow folder at "
-                \ . flowFolder . "?\nPlease enter y/Y if so\n")
+                \ . flowFolder . "?\nPlease enter y/Y if so: ")
         if tolower(userResponse) ==? "y"
-            silent execute "!mkdir "  . shellescape(".flow")
-            redraw!
+            call system ("mkdir "  . shellescape(".flow"))
         else
             return
         endif
     endif
 
     " create new code flow
-    " XXX maybe create function to establish what is a step consistently
+    " TODO(Mitchell): maybe create function to establish what is a step consistently
     let t:currentCodeFlow = {}
     " TODO(Mitchell) : check for invalid file names
-    let t:currentCodeFlow.name = input("Please give flow name\n")
+    " TODO(Mitchell): determine do we need to write this write away
+    let t:currentCodeFlow.name = input("\nPlease give flow name\n")
     let t:currentCodeFlow.file = ".flow/" . t:currentCodeFlow.name . ".flow"
     execute "pedit " . t:currentCodeFlow.file
     " TODO(Mitchell): change flow buffer settings to be unlisted
     " we will stil need a swap file as we do write to it though
     " TODO(Mitchell): save this writing till end 
     execute "wincmd k"
-    execute "wq"
+    silent execute "wq"
 
     " TODO(Mitchell): find duplicates of new state
     " this means that we are opening a new flow while one is already open
@@ -96,15 +94,11 @@ function! s:Flow.insertStep() abort
 endfunction
 " }}}
 
-" function! s:Flow.appendStep() {{{1
-function! s:Flow.appendStep() abort
+" function! s:Flow.addStep() {{{1
+function! s:Flow.addStep() abort
     call s:Flow.checkActiveFlow()
 
-    " create new step
-    let newStep = {}
-
     " add new step to the current flow
-    call insert(t:currentCodeFlow.steps, copy(newStep), t:currentCodeFlow.currentStep)
     let t:currentCodeFlow.currentStep = t:currentCodeFlow.numberSteps
     call s:Flow.insertStep()
 endfunction
@@ -126,7 +120,7 @@ function! s:Flow.goToStep(stepIndex) abort
 
     let t:currentCodeFlow.currentStep = a:stepIndex
     let currentStep = t:currentCodeFlow.steps[t:currentCodeFlow.currentStep - 1]
-    if bufnr(currentStep.file)
+    if bufnr(currentStep.file) !=# -1
         execute "buffer " . fnameescape(currentStep.file)
     else 
         execute "edit " . fnameescape(currentStep.file)
@@ -157,8 +151,8 @@ function! s:Flow.updateStep(shouldAdvance) abort
 endfunction
 " }}}
 
-" function! s:Flow.removeStep() {{{1
-function! s:Flow.removeStep() abort
+" function! s:Flow.deleteStep() {{{1
+function! s:Flow.deleteStep() abort
     call s:Flow.checkActiveFlow()
 
     if !t:currentCodeFlow.numberSteps
@@ -176,10 +170,8 @@ endfunction
 
 " }}}
 
-" TODO(Mitchell): update when we have the different step levels
-" will be used at the next step function
-" function! s:Flow.stepOver() {{{1
-function! s:Flow.stepOver() abort
+" function! s:Flow.nextStep() {{{1
+function! s:Flow.nextStep() abort
     " check for active flow
     " check if we are at the last step
     call s:Flow.checkActiveFlow()
@@ -194,38 +186,8 @@ endfunction
 
 " }}}
 
-" TODO(Mitchell):
-" function! s:Flow.stepInto() {{{1
-function! s:Flow.stepInto() abort
-    call s:Flow.checkActiveFlow()
-
-    if !t:currentCodeFlow.numberSteps
-        echoerr "No flow steps"
-        return
-    endif
-
-    call remove(t:currentCodeFlow.steps, t:currentCodeFlow.currentStep - 1)
-    if t:currentCodeFlow.currentStep == t:currentCodeFlow.numberSteps
-        let t:currentCodeFlow.currentStep -= 1
-    endif
-    let t:currentCodeFlow.numberSteps -= 1
-    call s:Flow.updateStatusLine()
-endfunction
-
-" }}}
-
-" TODO(Mitchell):
-" function! s:Flow.stepOut() {{{1
-function! s:Flow.stepOut() abort
-    call s:Flow.checkActiveFlow()
-endfunction
-
-" }}}
-
-" TODO(Mitchell): update when we have the different step levels
-" will be used at the next step function
-" function! s:Flow.prevOver() {{{1
-function! s:Flow.prevOver() abort
+" function! s:Flow.prevStep() {{{1
+function! s:Flow.prevStep() abort
     " check for active flow
     " check if we are at the last step
     call s:Flow.checkActiveFlow()
@@ -236,34 +198,6 @@ function! s:Flow.prevOver() abort
     " we are not at the last step
     " go to the next one
     call s:Flow.goToStep(t:currentCodeFlow.currentStep - 1)
-endfunction
-
-" }}}
-
-" TODO(Mitchell):
-" function! s:Flow.prevInto() {{{1
-function! s:Flow.prevInto() abort
-    call s:Flow.checkActiveFlow()
-
-    if !t:currentCodeFlow.numberSteps
-        echoerr "No flow steps"
-        return
-    endif
-
-    call remove(t:currentCodeFlow.steps, t:currentCodeFlow.currentStep - 1)
-    if t:currentCodeFlow.currentStep == t:currentCodeFlow.numberSteps
-        let t:currentCodeFlow.currentStep -= 1
-    endif
-    let t:currentCodeFlow.numberSteps -= 1
-    call s:Flow.updateStatusLine()
-endfunction
-
-" }}}
-
-" TODO(Mitchell):
-" function! s:Flow.prevOut() {{{1
-function! s:Flow.prevOut() abort
-    call s:Flow.checkActiveFlow()
 endfunction
 
 " }}}
@@ -292,6 +226,12 @@ endfunction
 
 " function! s:Flow._openFlow(name) {{{1
 function! s:Flow._openFlow(name) abort
+    let file = ".flow" . codeflow#slash() . a:name . ".flow"
+    if getftype(file) !=# "file"
+        echoerr "No flow with name " . a:name
+        return
+    endif
+
     let t:currentCodeFlow = {}
     let t:currentCodeFlow.name = a:name
     let t:currentCodeFlow.file = 
@@ -357,11 +297,11 @@ function! s:Flow.openFlow() abort
                 \ "Please give flow name\n",
                 \ "",
                 \ "customlist,OpenFlowCompletion")
-
     if !len(chosenFlow)
         echoerr "no flow given"
         return
     endif
+
     " TODO(Mitchell): check if we already have another flow going
     " TODO(Mitchell): add all the checking
     " it is much faster to implement when you know all the input that can be
