@@ -12,6 +12,8 @@ endfunction
 
 "FUNCTION: codeflow#loadClassFiles() {{{1
 function! codeflow#loadClassFiles() abort
+    runtime lib/codeflow.vim
+    runtime lib/window.vim
     " TODO(Mitchell): put all the class files here
     " if we are going to be doing OOP we might not need it now
     " TODO(Mitchell):
@@ -366,7 +368,7 @@ function! codeflow#execute(...) abort
             echoerr "too many args"
             return
         endif
-        call s:open_flow_window()
+        call g:CodeflowWindow.CreateFlowWindow()
     " TODO(Mitchell):
     elseif action ==# "close-window"
         if len(a:000) > 1
