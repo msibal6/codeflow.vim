@@ -67,19 +67,22 @@ endfunction
 "Find a keymapping for a:key and the current scope invoke it.
 "
 "Scope is determined as follows:
-"   * if the cursor is on a dir node then DirNode
-"   * if the cursor is on a file node then FileNode
-"   * if the cursor is on a bookmark then Bookmark
+"   * if the cursor is on a flow then flow
+"   * if the cursor is on a step then step
+"   * if the cursor is on nothing then general
 "
-"If a keymap has the scope of 'all' then it will be called if no other keymap
+"If a keymap has the scope of 'general' then it will be called if no other keymap
 "is found for a:key and the scope.
 function! s:KeyMap.Invoke(key) abort
     "required because clicking the command window below another window still
     "invokes the <LeftRelease> mapping - but changes the window cursor
     "is in first
-    "
-    "TODO: remove this check when the vim bug is fixed
-    if !exists('b:flowWindow')
+
+    " TODO: remove this check when the vim bug is fixed
+    " maybe this is already fixed
+    " this is only called on a buffer that has this keymaps
+    " this should never happen
+    if !exists('b:codeflowWindow')
         return {}
     endif
 
@@ -101,6 +104,11 @@ function! s:KeyMap.Invoke(key) abort
         if !empty(km)
             return km.invoke(node)
         endif
+    endif
+
+    let km = s:KeyMap.findFor(a:key, 'general')
+    if !empty(km)
+        return km.invoke(node)
     endif
 endfunction
 " }}}

@@ -1,16 +1,15 @@
 let s:Flow = {}
 let g:CodeflowFlow = s:Flow
 
-" function! s:Flow.savePrevStatusLine() {{{1
+" fun s:Flow.savePrevStatusLine() {{{1
 function! s:Flow.savePrevStatusLine() abort
     let t:previousStatusLine =
-                \ { 'laststatus':    &laststatus,
-                \   'statusline':   &statusline,
-                \ }
+                \ { 'laststatus': &laststatus,
+                \   'statusline': &statusline, }
 endfunction
 " }}}
 
-" function! s:Flow.updateStatusLine() {{{1
+" fun s:Flow.updateStatusLine() {{{1
 function! s:Flow.updateStatusLine() abort
     " display flow status line
     set statusline=%f
@@ -21,7 +20,7 @@ function! s:Flow.updateStatusLine() abort
 endfunction
 " }}}
 
-" function! s:Flow.isValidName(desiredName) {{{1
+" fun s:Flow.isValidName(desiredName) {{{1
 function! s:Flow.isValidName(desiredName) abort
     for char in a:desiredName
         if char !~# "[0-9A-Za-z _]"
@@ -32,14 +31,14 @@ function! s:Flow.isValidName(desiredName) abort
 endfunction
 " }}}
 
-" function! s:Flow.startFlow() {{{1
+" fun s:Flow.startFlow() {{{1
 function! s:Flow.startFlow() abort
     let folderStatus = codeflow#checkFlowFolder()
     if folderStatus ==# 0
         return
     endif
 
-    if s:Flow.isFlowActive()
+    if s:Flow.IsFlowActive()
         call s:Flow.closeFlow()
     endif
         
@@ -63,16 +62,15 @@ function! s:Flow.startFlow() abort
 endfunction
 " }}}
 
-" function! s:isFlowActive() {{{1
-function! s:Flow.isFlowActive() abort
+" fun s:IsFlowActive() {{{1
+function! s:Flow.IsFlowActive() abort
     return exists("t:currentCodeFlow")
 endfunction
 " }}}
-
-" function! s:Flow.checkActiveFlow() {{{1
-function! s:Flow.checkActiveFlow() abort
+" fun s:Flow.CheckActiveFlow() {{{1
+function! s:Flow.CheckActiveFlow() abort
     try
-        if !s:Flow.isFlowActive()
+        if !s:Flow.IsFlowActive()
             throw "No Active Flow"
         endif
     catch /\v^No/
@@ -80,10 +78,22 @@ function! s:Flow.checkActiveFlow() abort
     endtry
 endfunction
 " }}}
+" fun s:Flow.CheckValidStepFile() {{{1
+function! s:Flow.CheckValidStepFile() abort
+    try
+        if &buftype !=# ""
+            throw "Invalid file for step"
+        endif
+    catch /\v^Invalid/
+        throw "Invalid buftype for step"
+    endtry
+endfunction
+" }}}
 
-" function! s:Flow.insertStep() {{{1
+" fun s:Flow.insertStep() {{{1
 function! s:Flow.insertStep() abort
-    call s:Flow.checkActiveFlow()
+    call s:Flow.CheckActiveFlow()
+    call s:Flow.CheckValidStepFile()
 
     " create new step
     let newStep = {}
@@ -100,9 +110,10 @@ function! s:Flow.insertStep() abort
 endfunction
 " }}}
 
-" function! s:Flow.addStep() {{{1
+" fun s:Flow.addStep() {{{1
 function! s:Flow.addStep() abort
-    call s:Flow.checkActiveFlow()
+    call s:Flow.CheckActiveFlow()
+    call s:Flow.CheckValidStepFile()
 
     " add new step to the current flow
     let t:currentCodeFlow.currentStep = t:currentCodeFlow.numberSteps
@@ -110,9 +121,9 @@ function! s:Flow.addStep() abort
 endfunction
 " }}}
 
-" function! s:Flow.goToStep(stepIndex) {{{1
+" fun s:Flow.goToStep(stepIndex) {{{1
 function! s:Flow.goToStep(stepIndex) abort
-    call s:Flow.checkActiveFlow()
+    call s:Flow.CheckActiveFlow()
 
     if !a:stepIndex
         echoerr "No flow index given"
@@ -136,10 +147,50 @@ function! s:Flow.goToStep(stepIndex) abort
 endfunction
 
 " }}}
+" s:Flow.moveStepUp(stepIndex) {{{1
+function! s:Flow.moveStepUp(stepIndex) abort
+    call s:Flow.CheckActiveFlow()
+    if a:stepIndex <= 1
+        echoerr "Cannot move first step up anymore"
+        return
+    endif
 
-" function! s:Flow.updateStep() {{{1
-function! s:Flow.updateStep(shouldAdvance) abort
-    call s:Flow.checkActiveFlow()
+    let step = remove(t:currentCodeFlow.steps, a:stepIndex - 1)
+    call insert(t:currentCodeFlow.steps, step, a:stepIndex - 2)
+
+    if a:stepIndex ==# t:currentCodeFlow.currentStep
+        let t:currentCodeFlow.currentStep -= 1
+    elseif a:stepIndex ==# t:currentCodeFlow.currentStep + 1
+        let t:currentCodeFlow.currentStep += 1
+    endif
+    call s:Flow.updateStatusLine()
+endfunction
+
+" }}}
+" s:Flow.moveStepDown(stepIndex) {{{1
+function! s:Flow.moveStepDown(stepIndex) abort
+    call s:Flow.CheckActiveFlow()
+    if a:stepIndex >= t:currentCodeFlow.numberSteps
+        echoerr "Cannot move last step down anymore"
+        return
+    endif
+
+    let step = remove(t:currentCodeFlow.steps, a:stepIndex - 1)
+    call insert(t:currentCodeFlow.steps, step, a:stepIndex)
+
+    if a:stepIndex ==# t:currentCodeFlow.currentStep
+        let t:currentCodeFlow.currentStep += 1
+    elseif a:stepIndex ==# t:currentCodeFlow.currentStep - 1
+        let t:currentCodeFlow.currentStep -= 1
+    endif
+    call s:Flow.updateStatusLine()
+endfunction
+
+" }}}
+" fun s:Flow.updateStep() {{{1
+function! s:Flow.updateStep() abort
+    call s:Flow.CheckActiveFlow()
+    call s:Flow.CheckValidStepFile()
 
     " Update step
     let currentFile = expand("%")
@@ -151,15 +202,12 @@ function! s:Flow.updateStep(shouldAdvance) abort
     let newStep.file = currentFile
     let newStep.lineNumber = currentLineNumber
     let newStep.description = stepDesc
-    if a:shouldAdvance ==# 1
-        call s:Flow.goToStep(t:currentCodeFlow.currentStep + 1)
-    endif
 endfunction
 " }}}
 
-" function! s:Flow.deleteStep() {{{1
+" fun s:Flow.deleteStep() {{{1
 function! s:Flow.deleteStep() abort
-    call s:Flow.checkActiveFlow()
+    call s:Flow.CheckActiveFlow()
 
     if !t:currentCodeFlow.numberSteps
         echoerr "No flow steps"
@@ -176,91 +224,39 @@ endfunction
 
 " }}}
 
-" function! s:Flow.nextStep() {{{1
-function! s:Flow.nextStep() abort
-    " check for active flow
-    " check if we are at the last step
-    call s:Flow.checkActiveFlow()
-    if t:currentCodeFlow.currentStep == t:currentCodeFlow.numberSteps
-        echo "At the last step"
-        return
-    endif
-    " we are not at the last step
-    " go to the next one
-    call s:Flow.goToStep(t:currentCodeFlow.currentStep + 1)
-endfunction
-
-" }}}
-
-" function! s:Flow.prevStep() {{{1
-function! s:Flow.prevStep() abort
-    " check for active flow
-    " check if we are at the last step
-    call s:Flow.checkActiveFlow()
-    if t:currentCodeFlow.currentStep ==# 1
-        echo "At the first step for current flow"
-        return
-    endif
-    " we are not at the last step
-    " go to the next one
-    call s:Flow.goToStep(t:currentCodeFlow.currentStep - 1)
-endfunction
-
-" }}}
-
-" function! s:Flow.saveFlow() {{{
-function! s:Flow.saveFlow() abort
-    call s:Flow.checkActiveFlow()
-
-    " clear flow file
-    execute "pedit " . t:currentCodeFlow.file
-    execute "wincmd k"
-    normal! ggVGx
-    setlocal bufhidden=hide
-    setlocal nobuflisted
-    " write file, line number and description for each step
-    for step in t:currentCodeFlow.steps
-        execute "normal! i" . step.file . "\n"
-        execute "normal! i" . step.lineNumber . "\n"
-        execute "normal! i" . step.description . "\n"
-    endfor
-    " Delete the last empty line
-    normal! Gdd
-    execute "wq"
-endfunction
-" }}}
-
-" function! s:Flow._openFlow(name) {{{1
-function! s:Flow._openFlow(name) abort
-    if s:Flow.isFlowActive()
-        call s:Flow.closeFlow()
-    endif
-
-    let file = ".flow" . codeflow#slash() . a:name . ".flow"
+" fun s:Flow.loadFlow(name) {{{1
+function! s:Flow.loadFlow(name) abort
+    let file = ".flow" .. codeflow#slash() .. a:name .. ".flow"
     if getftype(file) !=# "file"
-        echoerr "No flow with name " . a:name
+        echoerr "No flow with name " .. a:name
         return
     endif
 
-    let t:currentCodeFlow = {}
-    let t:currentCodeFlow.name = a:name
-    let t:currentCodeFlow.file =
-                \ ".flow" . codeflow#slash()
-                \ . t:currentCodeFlow.name . ".flow"
-    let t:currentCodeFlow.steps = []
-    let t:currentCodeFlow.currentStep = 0
-    let t:currentCodeFlow.numberSteps = 0
+    " use local var because we lose tab scope when switching to new tab after
+    " using tabedit to read in flow file
+    let l:name = a:name
+    let l:file = ".flow" .. codeflow#slash() .. l:name .. ".flow"
+
+    let l:currentCodeFlow = {}
+    let l:currentCodeFlow.name = l:name
+    let l:currentCodeFlow.file = l:file
+    let l:currentCodeFlow.steps = []
+    let l:currentCodeFlow.currentStep = 0
+    let l:currentCodeFlow.numberSteps = 0
 
     " Read flow file
-    execute "pedit " . t:currentCodeFlow.file
-    execute "wincmd k"
-    setlocal bufhidden=hide
+    silent! execute "tabedit " .. l:currentCodeFlow.file
+    setlocal bufhidden=wipe
     setlocal nobuflisted
 
     let numberLines = line("$")
     let currentLine = 1
-    if currentLine == numberLines
-        silent execute "wq"
+    if currentLine ==# numberLines
+        silent! execute "wq"
+        if tabpagenr('$') >=# 1
+            normal! gT
+        endif
+        let t:currentCodeFlow = deepcopy(l:currentCodeFlow)
         call s:Flow.savePrevStatusLine()
         call s:Flow.updateStatusLine()
         return
@@ -275,28 +271,99 @@ function! s:Flow._openFlow(name) abort
             let newStep.lineNumber = currentLineText
         elseif currentLine % 3 == 0
             let newStep.description = currentLineText
-            call add(t:currentCodeFlow.steps, copy(newStep))
+            call add(l:currentCodeFlow.steps, copy(newStep))
         endif
         let currentLine += 1
     endwhile
-    silent execute "wq"
+    silent! execute "wq"
+    if tabpagenr('$') >=# 1
+        normal! gT
+    endif
 
     " Go to first step
+    let t:currentCodeFlow = deepcopy(l:currentCodeFlow)
     let t:currentCodeFlow.currentStep = 1
     let t:currentCodeFlow.numberSteps = numberLines / 3
     call s:Flow.savePrevStatusLine()
     call s:Flow.updateStatusLine()
-    call s:Flow.goToStep(t:currentCodeFlow.currentStep)
+endfunction
+" }}}
+" fun s:Flow.nextStep() {{{1
+function! s:Flow.nextStep() abort
+    " check for active flow
+    " check if we are at the last step
+    call s:Flow.CheckActiveFlow()
+    if t:currentCodeFlow.currentStep == t:currentCodeFlow.numberSteps
+        echo "At the last step"
+        return
+    endif
+    " we are not at the last step
+    " go to the next one
+    call s:Flow.goToStep(t:currentCodeFlow.currentStep + 1)
+endfunction
+
+" }}}
+
+" fun s:Flow.prevStep() {{{1
+function! s:Flow.prevStep() abort
+    " check for active flow
+    " check if we are at the last step
+    call s:Flow.CheckActiveFlow()
+    if t:currentCodeFlow.currentStep ==# 1
+        echo "At the first step for current flow"
+        return
+    endif
+    " we are not at the last step
+    " go to the next one
+    call s:Flow.goToStep(t:currentCodeFlow.currentStep - 1)
+endfunction
+
+" }}}
+
+" fun s:Flow.saveFlow() {{{
+function! s:Flow.saveFlow() abort
+    call s:Flow.CheckActiveFlow()
+
+    " clear flow file
+    let l:currentCodeFlow = deepcopy(t:currentCodeFlow)
+    execute "tabedit " . l:currentCodeFlow.file
+    normal! ggVGx
+    setlocal bufhidden=wipe
+    setlocal nobuflisted
+    " write file, line number and description for each step
+    for step in l:currentCodeFlow.steps
+        execute "normal! i" . step.file . "\n"
+        execute "normal! i" . step.lineNumber . "\n"
+        execute "normal! i" . step.description . "\n"
+    endfor
+    " Delete the last empty line
+    normal! Gdd
+    execute "wq"
+    if tabpagenr('$') >=# 1
+        normal! gT
+    endif
 endfunction
 " }}}
 
-" function! OpenFlowCompletion() {{{1
+" fun s:Flow._openFlow(name) {{{1
+function! s:Flow._openFlow(name) abort
+    if s:Flow.IsFlowActive()
+        call s:Flow.closeFlow()
+    endif
+
+    call s:Flow.loadFlow(a:name)
+    if t:currentCodeFlow.currentStep
+        call s:Flow.goToStep(t:currentCodeFlow.currentStep)
+    endif
+endfunction
+" }}}
+
+" fun OpenFlowCompletion() {{{1
 " This is global to be in scope for input()
 function! OpenFlowCompletion(lead, line, position) abort
     " if user has entered text, complete what they have written
     let flows = glob(".flow" . codeflow#slash() . "*.flow", 0, 1)
     call map(flows, {_, val -> fnamemodify(val, ":t:r")})
-    call map(flows, {_, val -> fnameescape(val)})
     if len(a:line)
         return matchfuzzy(flows, a:line)
     else 
@@ -306,7 +373,7 @@ endfunction
 
 " }}}
 
-" function! s:Flow.openFlow() {{{1
+" fun s:Flow.openFlow() {{{1
 function! s:Flow.openFlow() abort
     let chosenFlow = input(
                 \ "Please give flow name\n",
@@ -321,9 +388,9 @@ function! s:Flow.openFlow() abort
 endfunction
 " }}}
 
-" function! s:Flow.closeFlow() {{{1
+" fun s:Flow.closeFlow() {{{1
 function! s:Flow.closeFlow() abort
-    call s:Flow.checkActiveFlow()
+    call s:Flow.CheckActiveFlow()
     call s:Flow.saveFlow()
     " free and unlet to return to inactive flow state
     unlet t:currentCodeFlow.name

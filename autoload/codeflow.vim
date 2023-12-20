@@ -1,27 +1,9 @@
-function! codeflow#runningWindows() abort " {{{1
-    return has('win16') || has('win32') || has('win64')
-endfunction
-" }}}
+if exists('g:loaded_codeflow_autoload')
+    finish
+endif
+let g:loaded_codeflow_autoload = 1
 
-function! codeflow#runningCygwin() abort " {{{1
-    return has('win32unix')
-endfunction
-" }}}
-
-" function! codeflow#slash() " {{{1
-function! codeflow#slash() abort
-    if codeflow#runningWindows()
-        if exists('+shellslash') && &shellslash
-            return '/'
-        endif
-
-        return '\'
-    endif
-    return '/'
-endfunction
-" }}}
-
-" function! codeflow#checkFlowFolder() " {{{1
+" codeflow#checkFlowFolder() " {{{1
 function! codeflow#checkFlowFolder() abort
     let flowFolder = getcwd() . codeflow#slash() . ".flow"
     if getftype(flowFolder) !=# "dir"
@@ -38,21 +20,8 @@ function! codeflow#checkFlowFolder() abort
     return 1
 endfunction
 " }}}
-
-function! codeflow#loadClassFiles() abort " {{{1
-    runtime lib/window.vim
-    runtime lib/flow.vim
-    runtime lib/ui.vim
-    runtime lib/keymap.vim
-endfunction
-" }}}
-
-function! codeflow#postSourceActions() abort " {{{1
-    call codeflow#ui_glue#createDefaultBindings()
-endfunction
-" }}}
-
-function! s:checkArgCount(numArgs, numArgsNeeded) abort " {{{1
+" s:checkArgCount(numArgs, numArgsNeeded) abort " {{{1
+function! s:checkArgCount(numArgs, numArgsNeeded) abort
     try
         if a:numArgs > a:numArgsNeeded
             throw "Too many arguments"
@@ -66,13 +35,13 @@ function! s:checkArgCount(numArgs, numArgsNeeded) abort " {{{1
     endtry
 endfunction
 " }}}
-
-function! codeflow#execute(...) abort " {{{1
+" codeflow#execute(...) {{{1
+function! codeflow#execute(...) abort
     try
-        let action = a:1
+        let command = a:1
         try
             let validCommand = filter(copy(g:CodeflowCommandList),
-                        \ {_, val -> val.action ==# action})[0]
+                        \ {_, val -> val.command ==# command})[0]
             call s:checkArgCount(a:0 - 1, validCommand.argsNeeded)
             if len(a:000) == 2
                 call validCommand.internalFunction(a:2)
@@ -81,16 +50,58 @@ function! codeflow#execute(...) abort " {{{1
             endif
             call g:CodeflowWindow.rerender()
         catch /\vE684/
-            echoerr "Invalid action: " . action
+            echoerr "Invalid command: " . command
         endtry
     catch /\vNo active flow/
         echoerr "No active flow"
     catch /E121/
-        echoerr "No action" . v:throwpoint
+        echoerr "No command" . v:throwpoint
     catch /\v^Too/
-        echoerr "Too many arguments for " . action
+        echoerr "Too many arguments for " . command
     catch /\v^Not enough/
-        echoerr "Not enough arguments for " . action
+        echoerr "Not enough arguments for " . command
+    catch /\v^Invalid buftype/
+        echoerr "Invalid buftype for step"
     endtry
 endfunction
 "}}}
+" codeflow#loadClassFiles() {{{1
+function! codeflow#loadClassFiles() abort
+    runtime lib/flow.vim
+    runtime lib/flow_node.vim
+    runtime lib/keymap.vim
+    runtime lib/opener.vim
+    runtime lib/path.vim
+    runtime lib/step_node.vim
+    runtime lib/ui.vim
+    runtime lib/window.vim
+endfunction
+" }}}
+" codeflow#postSourceActions() {{{1
+function! codeflow#postSourceActions() abort
+    call codeflow#ui_glue#createDefaultBindings()
+endfunction
+" }}}
+" codeflow#runningWindows() {{{1
+function! codeflow#runningWindows() abort
+    return has('win16') || has('win32') || has('win64')
+endfunction
+" }}}
+" codeflow#runningCygwin() {{{1
+function! codeflow#runningCygwin() abort
+    return has('win32unix')
+endfunction
+" }}}
+" codeflow#slash() " {{{1
+function! codeflow#slash() abort
+    if codeflow#runningWindows()
+        if exists('+shellslash') && &shellslash
+            return "\/"
+        endif
+
+        return "\\"
+    endif
+    return "\/"
+endfunction
+" }}}
+
