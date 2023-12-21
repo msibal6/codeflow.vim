@@ -22,6 +22,9 @@ endfunction
 
 " fun s:Flow.isValidName(desiredName) {{{1
 function! s:Flow.isValidName(desiredName) abort
+    if empty(a:desiredName)
+        return 0
+    endif
     for char in a:desiredName
         if char !~# "[0-9A-Za-z _]"
             return 0
@@ -47,8 +50,7 @@ function! s:Flow.startFlow() abort
     let prompt .= "Please give flow name\n"
     let desiredName = input(prompt)
     if !s:Flow.isValidName(desiredName)
-        echo "\nPlease enter valid flow name with alphanumeric, ' ', and '_'
-                    \ characters" 
+        echoerr "Please enter valid flow name with alphanumeric, ' ', and '_' characters" 
         return
     endif
     let t:currentCodeFlow = {}
