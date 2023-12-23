@@ -194,13 +194,13 @@ function! s:Flow.updateStep() abort
     call s:Flow.CheckActiveFlow()
     call s:Flow.CheckValidStepFile()
 
+    " update new data to current step
+    let newStep = t:currentCodeFlow.steps[t:currentCodeFlow.currentStep - 1]
     " Update step
     let currentFile = expand("%")
     let currentLineNumber = line(".")
-    let stepDesc = input("Please describe this step\n")
+    let stepDesc = input("Please describe this step\n", newStep.description)
 
-    " update new data to current step
-    let newStep = t:currentCodeFlow.steps[t:currentCodeFlow.currentStep - 1]
     let newStep.file = currentFile
     let newStep.lineNumber = currentLineNumber
     let newStep.description = stepDesc

@@ -17,12 +17,10 @@ function! s:addCommand(command, functionString, argsNeeded) abort
 endfunction
 " }}}
 " fun s:activateStepNode(node) abort " {{{1
-function! s:activateStepNode(node) abort
+function! s:activateStepNode(stepNode) abort
     " XXX render speed for the selected steps being highlighted is slow?
     " but is satisfactory for now
-    let t:currentCodeFlow.currentStep = a:node.stepIndex
-    execute "wincmd p"
-    call g:CodeflowFlow.goToStep(a:node.stepIndex)
+    call a:stepNode.activate()
 endfunction
 "}}}
 " fun s:activateFlowNode(node) abort " {{{1

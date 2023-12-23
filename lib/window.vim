@@ -144,6 +144,8 @@ function! s:Window.setCodeflowWindowOptions() abort
     setlocal noswapfile
     setlocal nobuflisted
     setlocal filetype=codeflow
+    set wrap
+    set linebreak
 
     " view options
     set cursorline

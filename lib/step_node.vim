@@ -33,12 +33,11 @@ endfunction
 
 " fun s:StepNode.activate() {{{1
 function! s:StepNode.activate()
-    call self.open(a:0 ? a:1 : {})
+    call self.open()
 endfunction
 
 " fun s:StepNode.open() {{{1
 function! s:StepNode.open()
-    let options = a:0 ? a:1 : {}
     let opener = g:CodeflowOpener.New()
     call opener.open(self)
 endfunction
