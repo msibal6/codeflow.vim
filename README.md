@@ -40,3 +40,9 @@ steps will be displayed.
  - [X] use J/K to move steps up and down
  - [X] c to close current active flow
  - [X] c to create new active flow when no flow aactive
+ 
+## Contribution
+
+ - If you would like to contribute to Codeflow development programmatically, please feel free to hop into the source code and knocking out features! 
+ - If you would like to contribute to Codeflow development financially, please feel free to [buy me a coffee](https://ko-fi.com/celeschal)
+ - Any constructive contribution is welcome! :)
