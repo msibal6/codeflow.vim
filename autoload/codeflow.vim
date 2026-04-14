@@ -3,6 +3,7 @@ if exists('g:loaded_codeflow_autoload')
 endif
 let g:loaded_codeflow_autoload = 1
 
+" checks .flow folder exists at current vim call directory
 " codeflow#checkFlowFolder() " {{{1
 function! codeflow#checkFlowFolder() abort
     let flowFolder = getcwd() . codeflow#slash() . ".flow"
@@ -66,15 +67,17 @@ function! codeflow#execute(...) abort
 endfunction
 "}}}
 " codeflow#loadClassFiles() {{{1
+" load all the class files from the lib folder
 function! codeflow#loadClassFiles() abort
-    runtime lib/flow.vim
-    runtime lib/flow_node.vim
-    runtime lib/keymap.vim
-    runtime lib/opener.vim
-    runtime lib/path.vim
-    runtime lib/step_node.vim
-    runtime lib/ui.vim
-    runtime lib/window.vim
+    runtime! lib/**/*.vim
+    " runtime lib/flow.vim
+    " runtime lib/flow_node.vim
+    " runtime lib/keymap.vim
+    " runtime lib/opener.vim
+    " runtime lib/path.vim
+    " runtime lib/step_node.vim
+    " runtime lib/ui.vim
+    " runtime lib/window.vim
 endfunction
 " }}}
 " codeflow#postSourceActions() {{{1
