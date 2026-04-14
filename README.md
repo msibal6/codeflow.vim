@@ -32,9 +32,9 @@ steps will be displayed.
 
 | Default Hotkeys | Description                                            |
 | -----------     | -----------                                            |
-| \<CR\>          | starts flow under cursor<br>goes to step under cursor  |
-| \<o\>           | starts flow under cursor<br>goes to step under cursor  |
-| \<d\>           | deletes flow under cursor<br>deletes step under cursor |
+| \<CR\>          | No active Flow: starts flow under cursor<br>Active Flow: Active goes to step under cursor  |
+| \<o\>           | No active Flow: starts flow under cursor<br>Active Flow: goes to step under cursor  |
+| \<d\>           | No active Flow: deletes flow under cursor<br>Active Flow: deletes step under cursor |
 
 ## Feature Roadmap
  - [X] use J/K to move steps up and down
@@ -43,6 +43,5 @@ steps will be displayed.
  
 ## Contribution
 
- - If you would like to contribute to Codeflow development programmatically, please feel free to hop into the source code and knocking out features! 
- - If you would like to contribute to Codeflow development financially, please feel free to [buy me a coffee](https://ko-fi.com/celeschal)
+ - If you would like to contribute to Codeflow development, please feel free to hop into the source code and knocking out features! 
  - Any constructive contribution is welcome! :)
