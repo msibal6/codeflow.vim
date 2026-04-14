@@ -30,6 +30,15 @@ frictionless manner. When there is no active flow, all current flows for the
 current working directory will be displayed. When there is an active flow, all
 steps will be displayed.
 
+
+**When there is no active flow**
+| Default Hotkeys | Description                                            |
+| -----------     | -----------                                            |
+| \<CR\>          | No active Flow: starts flow under cursor<br>Active Flow: Active goes to step under cursor  |
+| \<o\>           | No active Flow: starts flow under cursor<br>Active Flow: goes to step under cursor  |
+| \<d\>           | No active Flow: deletes flow under cursor<br>Active Flow: deletes step under cursor |
+
+**When there is an active flow**
 | Default Hotkeys | Description                                            |
 | -----------     | -----------                                            |
 | \<CR\>          | No active Flow: starts flow under cursor<br>Active Flow: Active goes to step under cursor  |
