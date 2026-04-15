@@ -1,0 +1,40 @@
+*Codeflow.txt*	
+
+
+		  CODEFLOW MANUAL	  by Mitchell Sibal
+
+
+Cursor motions					*cursor-motions* *navigation*
+
+These commands move the cursor position.  If the new position is off of the
+screen, the screen is scrolled to show the cursor (see also 'scrolljump' and
+'scrolloff' options).
+
+1. Motions and operators	|operator|
+2. Left-right motions		|left-right-motions|
+3. Up-down motions		|up-down-motions|
+4. Word motions			|word-motions|
+5. Text object motions		|object-motions|
+6. Text object selection	|object-select|
+7. Marks			|mark-motions|
+8. Jumps			|jump-motions|
+9. Various motions		|various-motions|
+
+General remarks:
+
+If you want to know where you are in the file use the "CTRL-G" command
+|CTRL-G| or the "g CTRL-G" command |g_CTRL-G|.  If you set the 'ruler' option,
+the cursor position is continuously shown in the status line (which slows down
+Vim a little).
+
+Experienced users prefer the hjkl keys because they are always right under
+their fingers.  Beginners often prefer the arrow keys, because they do not
+know what the hjkl keys do.  The mnemonic value of hjkl is clear from looking
+at the keyboard.  Think of j as an arrow pointing downwards.
+
+The 'virtualedit' option can be set to make it possible to move the cursor to
+positions where there is no character or within a multi-column character (like
+a tab).
+
+==============================================================================
+1. Motions and operators				*operator*
