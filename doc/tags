@@ -10,6 +10,7 @@ CodeflowFunctionality	Codeflow.txt	/*CodeflowFunctionality*
 CodeflowGlobalCommands	Codeflow.txt	/*CodeflowGlobalCommands*
 CodeflowGoToStep	Codeflow.txt	/*CodeflowGoToStep*
 CodeflowInsertStep	Codeflow.txt	/*CodeflowInsertStep*
+CodeflowLicense	Codeflow.txt	/*CodeflowLicense*
 CodeflowNextStep	Codeflow.txt	/*CodeflowNextStep*
 CodeflowOpenWindow	Codeflow.txt	/*CodeflowOpenWindow*
 CodeflowPrevStep	Codeflow.txt	/*CodeflowPrevStep*
