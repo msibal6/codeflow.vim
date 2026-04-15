@@ -28,127 +28,19 @@ CONTENTS                                                     *Codeflow-contents*
 
 ==============================================================================
 1. Intro                                                              *Codeflow*
-
-What is this "Codeflow"??
-
-The Codeflow allows you to explore your filesystem and to open files and
-directories. It presents the filesystem to you in the form of a tree which you
-manipulate with the keyboard and/or mouse. It also allows you to perform
-simple filesystem operations.
-
-The following features and functionality are provided by the Codeflow:
-    * Files and directories are displayed in a hierarchical tree structure
-    * Different highlighting is provided for the following types of nodes:
-        * files
-        * directories
-        * sym-links
-        * windows .lnk files
-        * read-only files
-        * executable files
-    * Many (customisable) mappings are provided to manipulate the tree:
-        * Mappings to open/close/explore directory nodes
-        * Mappings to open files in new/existing windows/tabs
-        * Mappings to change the current root of the tree
-        * Mappings to navigate around the tree
-        * ...
-    * Directories and files can be bookmarked.
-    * Most Codeflow navigation can also be done with the mouse
-    * Filtering of tree content (can be toggled at runtime)
-        * custom file filters to prevent e.g. vim backup files being displayed
-        * optional displaying of hidden files (. files)
-        * files can be "turned off" so that only directories are displayed
-    * The position and size of the Codeflow window can be customised
-    * The order in which the nodes in the tree are listed can be customised.
-    * A model of your filesystem is created/maintained as you explore it. This
-      has several advantages:
-        * All filesystem information is cached and is only re-read on demand
-        * If you revisit a part of the tree that you left earlier in your
-          session, the directory nodes will be opened/closed as you left them
-    * The script remembers the cursor position and window position in the NERD
-      tree so you can toggle it off (or just close the tree window) and then
-      reopen it (with CodeflowToggle) the Codeflow window will appear exactly
-      as you left it
-    * You can have a separate Codeflow for each tab, share trees across tabs,
-      or a mix of both.
-    * By default the script overrides the default file browser (netrw), so if
-      you :edit a directory a (slightly modified) Codeflow will appear in the
-      current window
-    * A programmable menu system is provided (simulates right clicking on a
-      node)
-        * one default menu plugin is provided to perform basic filesystem
-          operations (create/delete/move/copy files/directories)
-    * There's an API for adding your own keymappings
-
-
 ==============================================================================
 2. Functionality provided                                *CodeflowFunctionality*
-
-------------------------------------------------------------------------------
 2.1. Global Commands                                    *CodeflowGlobalCommands*
-
-:Codeflow [<start-directory> | <bookmark>]                           *:Codeflow*
-    Opens a fresh Codeflow. The root of the tree depends on the argument
-    given. There are 3 cases: If no argument is given, the current directory
-    will be used.  If a directory is given, that will be used. If a bookmark
-    name is given, the corresponding directory will be used.  For example: >
-        :Codeflow /home/marty/vim7/src
-        :Codeflow foo   (foo is the name of a bookmark)
-<
-:CodeflowVCS [<start-directory> | <bookmark>]                     *:CodeflowVCS*
-    Like |:Codeflow|, but searches up the directory tree to find the top of
-    the version control system repository, and roots the Codeflow there. It
-    works with Git, Subversion, Mercurial, Bazaar, and Darcs repositories. A
-    couple of examples: >
-        :CodeflowVCS /home/marty/nerdtree/doc  (opens /home/marty/nerdtree)
-        :CodeflowVCS              (opens root of repository containing CWD)
-<
-:CodeflowFromBookmark <bookmark>                         *:CodeflowFromBookmark*
-    Opens a fresh Codeflow with the root initialized to the directory for
-    <bookmark>.  The only reason to use this command over :Codeflow is for
-    the completion (which is for bookmarks rather than directories).
-
-:CodeflowToggle [<start-directory> | <bookmark>]               *:CodeflowToggle*
-    If a Codeflow already exists for this tab, it is reopened and rendered
-    again. If <start-directory> or <bookmark> is given, the root of Codeflow
-    is set to that path. If no Codeflow exists for this tab then this command
-    acts the same as the |:Codeflow| command.
-
-:CodeflowToggleVCS [<start-directory> | <bookmark>]         *:CodeflowToggleVCS*
-    Like |:CodeflowToggle|, but searches up the directory tree to find the top of
-    the version control system repository, and roots the Codeflow there. It
-    works with Git, Subversion, Mercurial, Bazaar, and Darcs repositories. A
-    couple of examples: >
-        :CodeflowToggleVCS /home/marty/nerdtree/doc  (opens /home/marty/nerdtree)
-        :CodeflowToggleVCS              (opens root of repository containing CWD)
-
-:CodeflowFocus                                                  *:CodeflowFocus*
-    Opens (or reopens) the Codeflow if it is not currently visible;
-    otherwise, the cursor is moved to the already-open Codeflow.
-
-:CodeflowMirror                                                *:CodeflowMirror*
-    Shares an existing Codeflow, from another tab, in the current tab.
-    Changes made to one tree are reflected in both as they are actually the
-    same buffer.
-
-    If only one other Codeflow exists, that tree is automatically mirrored.
-    If more than one exists, the script will ask which tree to mirror.
-
-:CodeflowClose                                                  *:CodeflowClose*
-    Close the Codeflow in this tab.
-
-:CodeflowFind [<path>]                                           *:CodeflowFind*
-    Without the optional argument, find and reveal the file for the active
-    buffer in the Codeflow window.  With the <path> argument, find and
-    reveal the specified path.
-
-    Focus will be shifted to the Codeflow window, and the cursor will be
-    placed on the tree node for the determined path.  If a Codeflow for the
-    current tab does not exist, a new one will be initialized.
-
-:CodeflowCWD                                                      *:CodeflowCWD*
-    Change the Codeflow root to the current working directory.  If no
-    Codeflow exists for this tab, a new one is opened.
-
-:CodeflowRefreshRoot                                      *:CodeflowRefreshRoot*
-    Refreshes the Codeflow root node.
-
+CodeflowStart                                                    *CodeflowStart*
+CodeflowSave                                                      *CodeflowSave*
+CodeflowClose                                                    *CodeflowClose*
+CodeflowOpenWindow                                          *CodeflowOpenWindow*
+CodeflowCloseWindow                                        *CodeflowCloseWindow*
+CodeflowAddStep                                                *CodeflowAddStep*
+CodeflowInsertStep                                          *CodeflowInsertStep*
+CodeflowGoToStep <index>                                      *CodeflowGoToStep*
+CodeflowPrevStep                                              *CodeflowPrevStep*
+CodeflowNextStep                                              *CodeflowNextStep*
+CodeflowUpdateStep                                          *CodeflowUpdateStep*
+CodeflowDeleteStep                                          *CodeflowDeleteStep*
+CodeflowDeleteFlow                                          *CodeflowDeleteFlow*
