@@ -131,6 +131,6 @@ function! codeflow#ui_glue#setupCommands() abort
     call s:addCommand("nextStep", "g:CodeflowFlow.nextStep",0)
     call s:addCommand("updateStep", "g:CodeflowFlow.updateStep",0)
     call s:addCommand("deleteStep", "g:CodeflowFlow.deleteStep",0)
-    command! -nargs=* -bar -bang -complete=customlist,s:codeflowComplete codeflow call codeflow#execute(<f-args>)
+    command! -nargs=* -bar -bang -complete=customlist,s:codeflowComplete Codeflow call codeflow#execute(<f-args>)
 endfunction
 " }}}
