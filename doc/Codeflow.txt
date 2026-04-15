@@ -1,4 +1,4 @@
-*Codeflow.txt*	
+*codeflow.txt*	
 
 
 		  CODEFLOW MANUAL	  by Mitchell Sibal
